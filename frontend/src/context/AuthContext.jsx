@@ -7,8 +7,9 @@ export const AuthProvider = ({ children }) => {
     () => JSON.parse(localStorage.getItem("loggedInUser")) || null
   );
 
-  // Load users from localStorage
-  const users = JSON.parse(localStorage.getItem("signupDetails")) || [];
+  // Load users from localStorage (DB)
+  const users = JSON.parse(localStorage.getItem("signupDetails"));
+  const userList = Array.isArray(users) ? users : [];
 
   // Load logged-in user on refresh
   useEffect(() => {
@@ -16,9 +17,30 @@ export const AuthProvider = ({ children }) => {
     if (savedUser) setCurrentUser(savedUser);
   }, []);
 
-  // Signup function
-  const signup = (username, email, role, password, confirmPassword) => {
-    if (!username || !email || !role || !password || !confirmPassword) {
+  // SIGNUP (User Only)
+  // const signup = (username, email, password, confirmPassword) => {
+  //   if (!username || !email || !password || !confirmPassword) {
+  //     return { success: false, message: "Please fill all fields." };
+  //   }
+
+  //   if (password !== confirmPassword) {
+  //     return { success: false, message: "Passwords do not match." };
+  //   }
+
+  //   const userExists = users.find((u) => u.email === email);
+  //   if (userExists) {
+  //     return { success: false, message: "Email already registered." };
+  //   }
+
+  //   const newUser = { username, email, role: "user", password };
+
+  //   users.push(newUser);
+  //   localStorage.setItem("signupDetails", JSON.stringify(users));
+
+  //   return { success: true, message: "Signup successful!" };
+  // };
+  const signup = (username, email, password, confirmPassword) => {
+    if (!username || !email || !password || !confirmPassword) {
       return { success: false, message: "Please fill all fields." };
     }
 
@@ -26,27 +48,30 @@ export const AuthProvider = ({ children }) => {
       return { success: false, message: "Passwords do not match." };
     }
 
-    const userExists = users.find((u) => u.email === email);
+    const storedUsers = JSON.parse(localStorage.getItem("signupDetails"));
+    const usersArray = Array.isArray(storedUsers) ? storedUsers : [];
+
+    const userExists = usersArray.find((u) => u.email === email);
     if (userExists) {
       return { success: false, message: "Email already registered." };
     }
 
-    const newUser = { username, email, role, password };
+    const newUser = { username, email, role: "user", password };
+    usersArray.push(newUser);
 
-    users.push(newUser);
-    localStorage.setItem("signupDetails", JSON.stringify(users));
+    localStorage.setItem("signupDetails", JSON.stringify(usersArray));
 
     return { success: true, message: "Signup successful!" };
   };
 
-  // Login function
-  const login = (email, role, password) => {
-    if (!email || !role || !password) {
+  // LOGIN (Role auto-detected)
+  const login = (email, password) => {
+    if (!email || !password) {
       return { success: false, message: "Please fill all fields." };
     }
 
     const foundUser = users.find(
-      (u) => u.email === email && u.password === password && u.role === role
+      (u) => u.email === email && u.password === password
     );
 
     if (!foundUser) {
@@ -60,7 +85,7 @@ export const AuthProvider = ({ children }) => {
     return { success: true, message: "Login successful!" };
   };
 
-  // Logout function
+  // LOGOUT
   const logout = () => {
     localStorage.removeItem("loggedInUser");
     setCurrentUser(null);
@@ -73,5 +98,4 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-// Custom hook
 export const useAuth = () => useContext(AuthContext);

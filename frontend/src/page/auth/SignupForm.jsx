@@ -4,25 +4,18 @@ import {
   Button,
   FormControl,
   IconButton,
-  InputLabel,
-  MenuItem,
-  OutlinedInput,
-  Select,
   Stack,
   TextField,
   Typography,
 } from "@mui/material";
 import { useAuth } from "../../context/authContext";
 import CloseIcon from "@mui/icons-material/Close";
-import { useNavigate } from "react-router-dom";
 
-const SignupForm = ({ role }) => {
+const SignupForm = () => {
   const { signup } = useAuth();
-  const navigate = useNavigate();
 
   const [signupData, setSignupData] = useState({
     username: "",
-    role: "",
     email: "",
     password: "",
     confirmPassword: "",
@@ -34,7 +27,6 @@ const SignupForm = ({ role }) => {
     message: "",
   });
 
-  // Auto-close alert after 3 seconds
   useEffect(() => {
     if (alert.open) {
       const timer = setTimeout(() => setAlert({ ...alert, open: false }), 3000);
@@ -45,11 +37,9 @@ const SignupForm = ({ role }) => {
   const onSubmitHandler = (e) => {
     e.preventDefault();
 
-    // Call signup with separate parameters
     const result = signup(
       signupData.username,
       signupData.email,
-      signupData.role,
       signupData.password,
       signupData.confirmPassword
     );
@@ -60,36 +50,21 @@ const SignupForm = ({ role }) => {
       message: result.message,
     });
 
-    if (result.success) {
-      // Optionally redirect to login page after signup
-      setSignupData({
-        username: "",
-        role: "",
-        email: "",
-        password: "",
-        confirmPassword: "",
-      });
-    } else {
-      // Reset form on failed signup
-      setSignupData({
-        username: "",
-        role: "",
-        email: "",
-        password: "",
-        confirmPassword: "",
-      });
-    }
+    setSignupData({
+      username: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+    });
   };
 
   return (
     <>
-      {/* Alert */}
       {alert.open && (
         <Alert
           severity={alert.severity}
           action={
             <IconButton
-              aria-label="close"
               color="inherit"
               size="small"
               onClick={() => setAlert({ ...alert, open: false })}
@@ -97,7 +72,6 @@ const SignupForm = ({ role }) => {
               <CloseIcon fontSize="inherit" />
             </IconButton>
           }
-          sx={{ mb: 2 }}
         >
           {alert.message}
         </Alert>
@@ -112,51 +86,23 @@ const SignupForm = ({ role }) => {
           <FormControl fullWidth>
             <TextField
               label="User Name"
-              name="username"
               size="small"
               value={signupData.username}
               onChange={(e) =>
-                setSignupData((prev) => ({ ...prev, username: e.target.value }))
+                setSignupData({ ...signupData, username: e.target.value })
               }
-              autoComplete="username"
             />
-          </FormControl>
-
-          <FormControl fullWidth>
-            <InputLabel id="role-label">User Role</InputLabel>
-            <Select
-              labelId="role-label"
-              id="role"
-              name="role"
-              value={signupData.role}
-              onChange={(e) =>
-                setSignupData((prev) => ({ ...prev, role: e.target.value }))
-              }
-              input={<OutlinedInput label="User Role" />}
-            >
-              <MenuItem value="">
-                <em>Select role</em>
-              </MenuItem>
-              {role &&
-                role.map((r) => (
-                  <MenuItem key={r} value={r}>
-                    {r}
-                  </MenuItem>
-                ))}
-            </Select>
           </FormControl>
 
           <FormControl fullWidth>
             <TextField
               label="Email"
               type="email"
-              name="email"
               size="small"
               value={signupData.email}
               onChange={(e) =>
-                setSignupData((prev) => ({ ...prev, email: e.target.value }))
+                setSignupData({ ...signupData, email: e.target.value })
               }
-              autoComplete="email"
             />
           </FormControl>
 
@@ -164,13 +110,11 @@ const SignupForm = ({ role }) => {
             <TextField
               label="Password"
               type="password"
-              name="password"
               size="small"
               value={signupData.password}
               onChange={(e) =>
-                setSignupData((prev) => ({ ...prev, password: e.target.value }))
+                setSignupData({ ...signupData, password: e.target.value })
               }
-              autoComplete="new-password"
             />
           </FormControl>
 
@@ -178,26 +122,18 @@ const SignupForm = ({ role }) => {
             <TextField
               label="Confirm Password"
               type="password"
-              name="confirm-password"
               size="small"
               value={signupData.confirmPassword}
               onChange={(e) =>
-                setSignupData((prev) => ({
-                  ...prev,
+                setSignupData({
+                  ...signupData,
                   confirmPassword: e.target.value,
-                }))
+                })
               }
-              autoComplete="new-password"
             />
           </FormControl>
 
-          <Button
-            variant="contained"
-            size="large"
-            fullWidth
-            sx={{ borderRadius: 2, py: 1.4 }}
-            type="submit"
-          >
+          <Button variant="contained" type="submit" fullWidth>
             Sign Up
           </Button>
         </Stack>

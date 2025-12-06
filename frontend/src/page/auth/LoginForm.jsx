@@ -3,10 +3,6 @@ import {
   Button,
   FormControl,
   IconButton,
-  InputLabel,
-  MenuItem,
-  OutlinedInput,
-  Select,
   Stack,
   TextField,
   Typography,
@@ -16,13 +12,12 @@ import React, { useEffect, useState } from "react";
 import { useAuth } from "../../context/authContext";
 import { useNavigate } from "react-router-dom";
 
-const LoginForm = ({ role }) => {
+const LoginForm = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
   const [loginData, setLoginData] = useState({
     email: "",
-    role: "",
     password: "",
   });
 
@@ -32,7 +27,6 @@ const LoginForm = ({ role }) => {
     message: "",
   });
 
-  // Auto-close alert after 3 seconds
   useEffect(() => {
     if (alert.open) {
       const timer = setTimeout(() => setAlert({ ...alert, open: false }), 3000);
@@ -43,8 +37,7 @@ const LoginForm = ({ role }) => {
   const onSubmitHandler = (e) => {
     e.preventDefault();
 
-    // Correctly call login with separate parameters
-    const result = login(loginData.email, loginData.role, loginData.password);
+    const result = login(loginData.email, loginData.password);
 
     setAlert({
       open: true,
@@ -53,35 +46,20 @@ const LoginForm = ({ role }) => {
     });
 
     if (result.success) {
-      // Redirect user based on role
-      switch (loginData.role) {
-        case "admin":
-          navigate("/admin");
-          break;
-        case "staff":
-          navigate("/staff");
-          break;
-        case "user":
-          navigate("/user");
-          break;
-        default:
-          break;
-      }
+      const user = JSON.parse(localStorage.getItem("loggedInUser"));
+      navigate(`/${user.role}`);
     } else {
-      // Reset form on failed login
-      setLoginData({ email: "", role: "", password: "" });
+      setLoginData({ email: "", password: "" });
     }
   };
 
   return (
     <>
-      {/* Alert */}
       {alert.open && (
         <Alert
           severity={alert.severity}
           action={
             <IconButton
-              aria-label="close"
               color="inherit"
               size="small"
               onClick={() => setAlert({ ...alert, open: false })}
@@ -89,7 +67,6 @@ const LoginForm = ({ role }) => {
               <CloseIcon fontSize="inherit" />
             </IconButton>
           }
-          sx={{ mb: 2 }}
         >
           {alert.message}
         </Alert>
@@ -97,7 +74,7 @@ const LoginForm = ({ role }) => {
 
       <form onSubmit={onSubmitHandler}>
         <Stack spacing={2}>
-          <Typography variant="h5" fontWeight={700} textAlign="center">
+          <Typography variant="h5" textAlign="center" fontWeight={700}>
             Welcome Back
           </Typography>
 
@@ -105,61 +82,27 @@ const LoginForm = ({ role }) => {
             <TextField
               label="Email"
               type="email"
-              name="email"
               size="small"
               value={loginData.email}
               onChange={(e) =>
-                setLoginData((prev) => ({ ...prev, email: e.target.value }))
+                setLoginData({ ...loginData, email: e.target.value })
               }
-              autoComplete="email"
             />
-          </FormControl>
-
-          <FormControl fullWidth>
-            <InputLabel id="role-label">User Role</InputLabel>
-            <Select
-              labelId="role-label"
-              id="role"
-              name="role"
-              value={loginData.role}
-              onChange={(e) =>
-                setLoginData((prev) => ({ ...prev, role: e.target.value }))
-              }
-              input={<OutlinedInput label="User Role" />}
-            >
-              <MenuItem value="">
-                <em>Select role</em>
-              </MenuItem>
-              {role &&
-                role.map((r) => (
-                  <MenuItem key={r} value={r}>
-                    {r}
-                  </MenuItem>
-                ))}
-            </Select>
           </FormControl>
 
           <FormControl fullWidth>
             <TextField
               label="Password"
               type="password"
-              name="password"
               size="small"
               value={loginData.password}
               onChange={(e) =>
-                setLoginData((prev) => ({ ...prev, password: e.target.value }))
+                setLoginData({ ...loginData, password: e.target.value })
               }
-              autoComplete="current-password"
             />
           </FormControl>
 
-          <Button
-            variant="contained"
-            size="large"
-            fullWidth
-            sx={{ borderRadius: 2, py: 1.4 }}
-            type="submit"
-          >
+          <Button fullWidth variant="contained" type="submit">
             Login
           </Button>
         </Stack>
