@@ -17,28 +17,6 @@ export const AuthProvider = ({ children }) => {
     if (savedUser) setCurrentUser(savedUser);
   }, []);
 
-  // SIGNUP (User Only)
-  // const signup = (username, email, password, confirmPassword) => {
-  //   if (!username || !email || !password || !confirmPassword) {
-  //     return { success: false, message: "Please fill all fields." };
-  //   }
-
-  //   if (password !== confirmPassword) {
-  //     return { success: false, message: "Passwords do not match." };
-  //   }
-
-  //   const userExists = users.find((u) => u.email === email);
-  //   if (userExists) {
-  //     return { success: false, message: "Email already registered." };
-  //   }
-
-  //   const newUser = { username, email, role: "user", password };
-
-  //   users.push(newUser);
-  //   localStorage.setItem("signupDetails", JSON.stringify(users));
-
-  //   return { success: true, message: "Signup successful!" };
-  // };
   const signup = (username, email, password, confirmPassword) => {
     if (!username || !email || !password || !confirmPassword) {
       return { success: false, message: "Please fill all fields." };
