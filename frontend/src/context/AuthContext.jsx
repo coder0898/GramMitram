@@ -17,7 +17,13 @@ export const AuthProvider = ({ children }) => {
     if (savedUser) setCurrentUser(savedUser);
   }, []);
 
-  const signup = (username, email, password, confirmPassword) => {
+  const signup = (
+    username,
+    email,
+    password,
+    confirmPassword,
+    role = "user"
+  ) => {
     if (!username || !email || !password || !confirmPassword) {
       return { success: false, message: "Please fill all fields." };
     }
@@ -34,7 +40,13 @@ export const AuthProvider = ({ children }) => {
       return { success: false, message: "Email already registered." };
     }
 
-    const newUser = { username, email, role: "user", password };
+    const newUser = {
+      username,
+      email,
+      role,
+      password,
+      createdAt: new Date().toISOString(),
+    };
     usersArray.push(newUser);
 
     localStorage.setItem("signupDetails", JSON.stringify(usersArray));

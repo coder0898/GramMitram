@@ -8,7 +8,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { useAuth } from "../../context/authContext";
+import { useAuth } from "../../context/AuthContext";
 import CloseIcon from "@mui/icons-material/Close";
 
 const SignupForm = () => {

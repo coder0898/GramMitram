@@ -24,9 +24,11 @@ import LogoutIcon from "@mui/icons-material/Logout";
 import HistoryIcon from "@mui/icons-material/History";
 
 import { useAuth } from "../../context/AuthContext";
-import ServiceTab from "../../tabs/ServiceTab";
-import ApplicationTab from "../../tabs/ApplicationTab";
-import StaffTab from "../../tabs/StaffTab";
+import ServiceTab from "../../tabs/admin/ServiceTab";
+import ApplicationTab from "../../tabs/admin/ApplicationTab";
+import StaffTab from "../../tabs/admin/StaffTab";
+import ProfileTab from "../../tabs/admin/ProfileTab";
+import Dashboard from "../../tabs/admin/Dashboard";
 
 const drawerWidth = 290;
 
@@ -73,11 +75,11 @@ export default function AdminPanelLayout() {
   const ProfileContent = () => <Typography>User profile details</Typography>;
 
   const tabContentMap = {
-    Dashboard: <DashboardContent />,
+    Dashboard: <Dashboard />,
     "Service Management": <ServiceTab />,
     "Application Management": <ApplicationTab />,
     "Staff Management": <StaffTab />,
-    Profile: <ProfileContent />,
+    Profile: <ProfileTab />,
   };
 
   const drawer = (
