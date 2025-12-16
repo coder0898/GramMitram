@@ -3,6 +3,10 @@ import {
   Box,
   Button,
   Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   FormControl,
   InputLabel,
   MenuItem,
@@ -21,13 +25,17 @@ import {
   Tabs,
   TextField,
   Typography,
+  IconButton,
 } from "@mui/material";
-import React, { useState } from "react";
-
-const serviceData = JSON.parse(localStorage.getItem("Services")) || [];
+import React, { useEffect, useState } from "react";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 const ServiceTab = () => {
+  const [servicesList, setServicesList] = useState([]);
   const [tab, setTab] = useState(0);
+
   const [services, setServices] = useState({
     service_name: "",
     service_desc: "",
@@ -35,14 +43,27 @@ const ServiceTab = () => {
     category: "",
     service_status: true,
   });
+
   const [alert, setAlert] = useState({
     open: false,
     message: "",
     severity: "success",
   });
-  const [search, setSearch] = useState("");
+
   const [order, setOrder] = useState("asc");
   const [orderBy, setOrderBy] = useState("service_name");
+
+  // MODAL STATES
+  const [viewOpen, setViewOpen] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [selectedService, setSelectedService] = useState(null);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+
+  // LOAD SERVICES
+  useEffect(() => {
+    const stored = JSON.parse(localStorage.getItem("Services")) || [];
+    setServicesList(stored);
+  }, []);
 
   const handleSort = (column) => {
     const isAsc = orderBy === column && order === "asc";
@@ -50,14 +71,11 @@ const ServiceTab = () => {
     setOrderBy(column);
   };
 
-  const filteredServices = serviceData
-    .filter((s) => s.service_name.toLowerCase().includes(search.toLowerCase()))
-    .sort((a, b) => {
-      if (a[orderBy] < b[orderBy]) return order === "asc" ? -1 : 1;
-      if (a[orderBy] > b[orderBy]) return order === "asc" ? 1 : -1;
-      return 0;
-    });
-  //   const [selectedService, setSelectedService] = useState(null);
+  const filteredServices = [...servicesList].sort((a, b) => {
+    if (a[orderBy] < b[orderBy]) return order === "asc" ? -1 : 1;
+    if (a[orderBy] > b[orderBy]) return order === "asc" ? 1 : -1;
+    return 0;
+  });
 
   //form reset
   const handleFormReset = (e) => {
@@ -71,26 +89,17 @@ const ServiceTab = () => {
     });
   };
 
-  //submit service
-  const handleFormSubmit = (e) => {
-    e.preventDefault();
+  // CREATE SERVICE
+  const handleFormSubmit = () => {
     if (
       !services.service_name ||
       !services.service_desc ||
-      !services.requiredDocuments ||
       !services.category
     ) {
       setAlert({
         open: true,
-        message: "Please fill all fields!",
+        message: "Please fill all fields",
         severity: "error",
-      });
-      setServices({
-        service_name: "",
-        service_desc: "",
-        requiredDocuments: [],
-        category: "",
-        service_status: true,
       });
       return;
     }
@@ -101,15 +110,16 @@ const ServiceTab = () => {
       createdAt: new Date().toISOString(),
     };
 
-    serviceData.push(newService);
-    localStorage.setItem("Services", JSON.stringify(serviceData));
+    const updated = [...servicesList, newService];
+    setServicesList(updated);
+    localStorage.setItem("Services", JSON.stringify(updated));
+
     setAlert({
       open: true,
       message: "Service created successfully!",
       severity: "success",
     });
 
-    // Reset form
     setServices({
       service_name: "",
       service_desc: "",
@@ -119,8 +129,52 @@ const ServiceTab = () => {
     });
   };
 
+  // VIEW
+  const handleView = (service) => {
+    setSelectedService({ ...service });
+    setEditMode(false);
+    setViewOpen(true);
+  };
+
+  // SAVE EDIT
+  const handleSaveChanges = () => {
+    const updated = servicesList.map((s) =>
+      s.id === selectedService.id ? selectedService : s
+    );
+
+    setServicesList(updated);
+    localStorage.setItem("Services", JSON.stringify(updated));
+
+    setEditMode(false);
+    setViewOpen(false);
+
+    setAlert({
+      open: true,
+      message: "Service updated successfully!",
+      severity: "success",
+    });
+  };
+
+  // DELETE
+  const handleDelete = () => {
+    const updated = servicesList.filter((s) => s.id !== selectedService.id);
+
+    setServicesList(updated);
+    localStorage.setItem("Services", JSON.stringify(updated));
+
+    setDeleteConfirmOpen(false);
+    setViewOpen(false);
+
+    setAlert({
+      open: true,
+      message: "Service deleted successfully!",
+      severity: "success",
+    });
+  };
+
   return (
     <>
+      {/* ALERT */}
       <Snackbar
         open={alert.open}
         autoHideDuration={3000}
@@ -129,258 +183,352 @@ const ServiceTab = () => {
       >
         <Alert severity={alert.severity}>{alert.message}</Alert>
       </Snackbar>
-      ;
-      <Box sx={{ width: "100%" }}>
-        {/* SUB TABS */}
-        <Tabs
-          value={tab}
-          onChange={(e, newValue) => setTab(newValue)}
-          sx={{ borderBottom: 1, borderColor: "divider" }}
-        >
-          <Tab label="All Services" />
-          <Tab label="Create Service" />
-        </Tabs>
 
-        {/* TAB 1: TABLE */}
-        {tab === 0 && (
-          <Box sx={{ mt: 3 }}>
-            <Typography variant="h6">All Services</Typography>
-            {/* <table border="1" width="100%">
-              <thead>
-                <tr>
-                  <th>Service Name</th>
-                  <th>Category</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>Water Supply</td>
-                  <td>Utility</td>
-                  <td>Active</td>
-                </tr>
-              </tbody>
-            </table> */}
-            <TableContainer component={Paper}>
-              <Table sx={{ minWidth: 700 }} aria-label="customized table">
-                <TableHead
-                  sx={{
-                    backgroundColor: "primary.main",
-                  }}
-                >
-                  <TableRow>
-                    <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                      <TableSortLabel
-                        active={orderBy === "service_name"}
-                        direction={order}
-                        onClick={() => handleSort("service_name")}
-                      >
-                        Service Name
-                      </TableSortLabel>
-                    </TableCell>
+      {/* TABS */}
+      <Tabs value={tab} onChange={(e, v) => setTab(v)}>
+        <Tab label="All Services" />
+        <Tab label="Create Service" />
+      </Tabs>
 
-                    <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                      Required Documents
-                    </TableCell>
+      {/* ================= TABLE TAB ================= */}
+      {tab === 0 && (
+        <TableContainer component={Paper} sx={{ mt: 3 }}>
+          <Table>
+            <TableHead sx={{ backgroundColor: "primary.main" }}>
+              <TableRow>
+                <TableCell sx={{ color: "#fff", fontWeight: 600 }}>
+                  <TableSortLabel
+                    active={orderBy === "service_name"}
+                    direction={order}
+                    onClick={() => handleSort("service_name")}
+                  >
+                    Service Name
+                  </TableSortLabel>
+                </TableCell>
 
-                    <TableCell>
-                      <TableSortLabel
-                        sx={{ color: "white", fontWeight: "bold" }}
-                        active={orderBy === "category"}
-                        direction={order}
-                        onClick={() => handleSort("category")}
-                      >
-                        Service Category
-                      </TableSortLabel>
-                    </TableCell>
+                <TableCell sx={{ color: "#fff", fontWeight: 600 }}>
+                  Documents
+                </TableCell>
 
-                    <TableCell>
-                      <TableSortLabel
-                        sx={{ color: "white", fontWeight: "bold" }}
-                        active={orderBy === "service_status"}
-                        direction={order}
-                        onClick={() => handleSort("service_status")}
-                      >
-                        Status
-                      </TableSortLabel>
-                    </TableCell>
+                <TableCell sx={{ color: "#fff", fontWeight: 600 }}>
+                  <TableSortLabel
+                    active={orderBy === "category"}
+                    direction={order}
+                    onClick={() => handleSort("category")}
+                  >
+                    Category
+                  </TableSortLabel>
+                </TableCell>
 
-                    <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                      Action
-                    </TableCell>
-                  </TableRow>
-                </TableHead>
+                <TableCell sx={{ color: "#fff", fontWeight: 600 }}>
+                  <TableSortLabel
+                    active={orderBy === "service_status"}
+                    direction={order}
+                    onClick={() => handleSort("service_status")}
+                  >
+                    Status
+                  </TableSortLabel>
+                </TableCell>
 
-                <TableBody>
-                  {filteredServices.map((row) => (
-                    <TableRow key={row.id}>
-                      <TableCell>{row.service_name}</TableCell>
+                <TableCell sx={{ color: "#fff", fontWeight: 600 }}>
+                  Action
+                </TableCell>
+              </TableRow>
+            </TableHead>
 
-                      <TableCell>
-                        {row.requiredDocuments.map((doc) => (
-                          <Chip
-                            key={doc}
-                            label={doc}
-                            size="small"
-                            sx={{ mr: 0.5, mb: 0.5 }}
-                          />
-                        ))}
-                      </TableCell>
+            <TableBody>
+              {filteredServices.map((row) => (
+                <TableRow key={row.id} hover>
+                  <TableCell>{row.service_name}</TableCell>
 
-                      <TableCell>{row.category || "-"}</TableCell>
+                  <TableCell>
+                    {row.requiredDocuments.map((d) => (
+                      <Chip
+                        key={d}
+                        label={d}
+                        size="small"
+                        sx={{ mr: 0.5, mb: 0.5 }}
+                      />
+                    ))}
+                  </TableCell>
 
-                      <TableCell
-                        sx={{
-                          color: row.service_status
-                            ? "success.main"
-                            : "error.main",
-                          fontWeight: 500,
-                        }}
-                      >
-                        {row.service_status ? "Active" : "Inactive"}
-                      </TableCell>
+                  <TableCell>{row.category}</TableCell>
 
-                      <TableCell>
-                        <Button size="small" variant="contained">
-                          View
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  <TableCell
+                    sx={{
+                      color: row.service_status ? "success.main" : "error.main",
+                      fontWeight: 500,
+                    }}
+                  >
+                    {row.service_status ? "Active" : "Inactive"}
+                  </TableCell>
 
-                  {filteredServices.length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={5} align="center">
-                        No services found
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </Box>
-        )}
+                  <TableCell>
+                    <Button
+                      size="small"
+                      variant="contained"
+                      startIcon={<VisibilityIcon />}
+                      onClick={() => handleView(row)}
+                    >
+                      View
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
 
-        {/* TAB 2: FORM */}
-        {tab === 1 && (
-          <Box sx={{ maxWidth: 400, mt: 3 }}>
-            <Typography variant="h6" gutterBottom>
-              Create Service
+              {filteredServices.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={5} align="center">
+                    No services found
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
+
+      {/* ================= CREATE FORM TAB ================= */}
+      {tab === 1 && (
+        <Box sx={{ maxWidth: 450, mt: 3 }}>
+          <TextField
+            fullWidth
+            label="Service Name"
+            value={services.service_name}
+            onChange={(e) =>
+              setServices({ ...services, service_name: e.target.value })
+            }
+            margin="normal"
+          />
+
+          <TextField
+            fullWidth
+            label="Service Description"
+            value={services.service_desc}
+            onChange={(e) =>
+              setServices({ ...services, service_desc: e.target.value })
+            }
+            margin="normal"
+          />
+
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Category</InputLabel>
+            <Select
+              value={services.category}
+              label="Category"
+              onChange={(e) =>
+                setServices((prev) => ({
+                  ...prev,
+                  category: e.target.value,
+                }))
+              }
+            >
+              <MenuItem value="agriculture">Agriculture</MenuItem>
+              <MenuItem value="essential">Essential</MenuItem>
+              <MenuItem value="finance">Finance</MenuItem>
+              <MenuItem value="health">Health</MenuItem>
+            </Select>
+          </FormControl>
+
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Required Documents</InputLabel>
+            <Select
+              multiple
+              value={services.requiredDocuments}
+              label="Required Documents"
+              onChange={(e) =>
+                setServices((prev) => ({
+                  ...prev,
+                  requiredDocuments: e.target.value,
+                }))
+              }
+            >
+              <MenuItem value="aadhaar">Aadhaar Card</MenuItem>
+              <MenuItem value="pan">PAN Card</MenuItem>
+              <MenuItem value="age_proof">
+                Age Proof (10th / 12th / Birth Certificate)
+              </MenuItem>
+              <MenuItem value="electricity_bill">Electricity Bill</MenuItem>
+              <MenuItem value="ration_card">Ration Card</MenuItem>
+            </Select>
+          </FormControl>
+
+          <Box sx={{ display: "flex", alignItems: "center", mt: 2 }}>
+            <Typography
+              sx={{
+                mr: 2,
+                color: services.service_status ? "success.main" : "error.main",
+              }}
+            >
+              Status: {services.service_status ? "Active" : "Inactive"}
             </Typography>
 
-            <FormControl fullWidth margin="normal">
+            <Switch
+              checked={services.service_status}
+              onChange={(e) =>
+                setServices((prev) => ({
+                  ...prev,
+                  service_status: e.target.checked,
+                }))
+              }
+            />
+          </Box>
+
+          <Box sx={{ display: "flex", gap: 2, mt: 3 }}>
+            <Button
+              variant="contained"
+              color="success"
+              onClick={handleFormSubmit}
+            >
+              Save Service
+            </Button>
+
+            <Button
+              variant="contained"
+              color="warning"
+              onClick={handleFormReset}
+            >
+              Reset Form
+            </Button>
+          </Box>
+        </Box>
+      )}
+
+      {/* ================= VIEW / EDIT MODAL ================= */}
+      <Dialog open={viewOpen} fullWidth maxWidth="sm">
+        <DialogTitle
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          {/* TITLE */}
+          <Box component="span" sx={{ fontWeight: 600 }}>
+            Service Details
+          </Box>
+
+          {/* ACTIONS */}
+          <Box>
+            <IconButton
+              onClick={() =>
+                editMode ? handleSaveChanges() : setEditMode(true)
+              }
+              title={editMode ? "Save" : "Edit"}
+            >
+              {editMode ? "Save" : <EditIcon />}
+            </IconButton>
+
+            <IconButton
+              color="error"
+              onClick={() => setDeleteConfirmOpen(true)}
+              title="Delete"
+            >
+              <DeleteIcon />
+            </IconButton>
+
+            <IconButton
+              onClick={() => {
+                setViewOpen(false);
+                setEditMode(false);
+              }}
+              title="Close"
+            >
+              ✕
+            </IconButton>
+          </Box>
+        </DialogTitle>
+
+        <DialogContent dividers>
+          {selectedService && (
+            <>
               <TextField
                 fullWidth
                 label="Service Name"
-                value={services.service_name}
-                onChange={(e) =>
-                  setServices((prev) => ({
-                    ...prev,
-                    service_name: e.target.value,
-                  }))
-                }
+                disabled={!editMode}
                 margin="normal"
+                value={selectedService.service_name}
+                onChange={(e) =>
+                  setSelectedService({
+                    ...selectedService,
+                    service_name: e.target.value,
+                  })
+                }
               />
-            </FormControl>
 
-            <FormControl fullWidth margin="normal">
               <TextField
                 fullWidth
-                label="Service Description"
+                label="Description"
+                disabled={!editMode}
                 margin="normal"
-                value={services.service_desc}
+                value={selectedService.service_desc}
                 onChange={(e) =>
-                  setServices((prev) => ({
-                    ...prev,
+                  setSelectedService({
+                    ...selectedService,
                     service_desc: e.target.value,
-                  }))
+                  })
                 }
               />
-            </FormControl>
 
-            <FormControl fullWidth margin="normal">
-              <InputLabel>Category</InputLabel>
-              <Select
-                value={services.category}
-                label="Category"
-                onChange={(e) =>
-                  setServices((prev) => ({
-                    ...prev,
-                    category: e.target.value,
-                  }))
-                }
-              >
-                <MenuItem value="agriculture">Agriculture</MenuItem>
-                <MenuItem value="essential">Essential</MenuItem>
-                <MenuItem value="finance">Finance</MenuItem>
-                <MenuItem value="health">Health</MenuItem>
-              </Select>
-            </FormControl>
+              <FormControl fullWidth margin="normal">
+                <InputLabel>Category</InputLabel>
+                <Select
+                  disabled={!editMode}
+                  value={selectedService.category}
+                  label="Category"
+                  onChange={(e) =>
+                    setSelectedService({
+                      ...selectedService,
+                      category: e.target.value,
+                    })
+                  }
+                >
+                  <MenuItem value="agriculture">Agriculture</MenuItem>
+                  <MenuItem value="essential">Essential</MenuItem>
+                  <MenuItem value="finance">Finance</MenuItem>
+                  <MenuItem value="health">Health</MenuItem>
+                </Select>
+              </FormControl>
 
-            <FormControl fullWidth margin="normal">
-              <InputLabel>Required Documents</InputLabel>
-              <Select
-                multiple
-                value={services.requiredDocuments}
-                label="Required Documents"
-                onChange={(e) =>
-                  setServices((prev) => ({
-                    ...prev,
-                    requiredDocuments: e.target.value,
-                  }))
-                }
-              >
-                <MenuItem value="aadhaar">Aadhaar Card</MenuItem>
-                <MenuItem value="pan">PAN Card</MenuItem>
-                <MenuItem value="age_proof">
-                  Age Proof (10th / 12th Certificate / Birth Certificate)
-                </MenuItem>
-                <MenuItem value="electricity_bill">Electricity Bill</MenuItem>
-                <MenuItem value="ration_card">Ration Card</MenuItem>
-              </Select>
-            </FormControl>
+              <Box sx={{ display: "flex", alignItems: "center", mt: 2 }}>
+                <Typography sx={{ mr: 2, fontWeight: 500 }}>Status</Typography>
+                <Switch
+                  disabled={!editMode}
+                  checked={selectedService.service_status}
+                  onChange={(e) =>
+                    setSelectedService({
+                      ...selectedService,
+                      service_status: e.target.checked,
+                    })
+                  }
+                />
+              </Box>
+            </>
+          )}
+        </DialogContent>
 
-            <Box sx={{ display: "flex", alignItems: "center", mt: 2 }}>
-              <Typography
-                sx={{
-                  mr: 2,
-                  color: services.service_status
-                    ? "success.main"
-                    : "error.main",
-                }}
-              >
-                Status: {services.service_status ? "Active" : "Inactive"}
-              </Typography>
-              <Switch
-                checked={services.service_status}
-                onChange={(e) =>
-                  setServices((prev) => ({
-                    ...prev,
-                    service_status: e.target.checked,
-                  }))
-                }
-              />
-            </Box>
+        <DialogActions>
+          <Button
+            onClick={() => {
+              setViewOpen(false);
+              setEditMode(false);
+            }}
+          >
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
 
-            <Box sx={{ display: "flex", gap: 2, mt: 3 }}>
-              <Button
-                variant="contained"
-                color="success"
-                onClick={handleFormSubmit}
-              >
-                Save Service
-              </Button>
-              <Button
-                variant="contained"
-                color="warning"
-                onClick={handleFormReset}
-              >
-                Reset Form
-              </Button>
-            </Box>
-          </Box>
-        )}
-      </Box>
+      {/* ================= DELETE CONFIRM ================= */}
+      <Dialog open={deleteConfirmOpen}>
+        <DialogTitle>Are you sure want to delete this service.?</DialogTitle>
+        <DialogActions>
+          <Button onClick={() => setDeleteConfirmOpen(false)}>Cancel</Button>
+          <Button color="error" variant="contained" onClick={handleDelete}>
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 };
