@@ -26,6 +26,7 @@ import HistoryIcon from "@mui/icons-material/History";
 import { useAuth } from "../../context/AuthContext";
 import ServiceTab from "../../tabs/ServiceTab";
 import ApplicationTab from "../../tabs/ApplicationTab";
+import StaffTab from "../../tabs/StaffTab";
 
 const drawerWidth = 290;
 
@@ -75,7 +76,7 @@ export default function AdminPanelLayout() {
     Dashboard: <DashboardContent />,
     "Service Management": <ServiceTab />,
     "Application Management": <ApplicationTab />,
-    "Staff Management": <StaffManagementContent />,
+    "Staff Management": <StaffTab />,
     Profile: <ProfileContent />,
   };
 
