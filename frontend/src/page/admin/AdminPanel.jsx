@@ -29,6 +29,7 @@ import ApplicationTab from "../../tabs/admin/ApplicationTab";
 import StaffTab from "../../tabs/admin/StaffTab";
 import ProfileTab from "../../tabs/admin/ProfileTab";
 import Dashboard from "../../tabs/admin/Dashboard";
+import { AdminPanelProvider } from "../../context/AdminContext";
 
 const drawerWidth = 290;
 
@@ -108,86 +109,88 @@ export default function AdminPanelLayout() {
   );
 
   return (
-    <Box sx={{ display: "flex" }}>
-      <CssBaseline />
+    <AdminPanelProvider>
+      <Box sx={{ display: "flex" }}>
+        <CssBaseline />
 
-      {/* TOP APP BAR */}
-      <AppBar position="fixed" sx={{ zIndex: 1300 }}>
-        <Toolbar>
-          <IconButton
-            color="inherit"
-            edge="start"
-            onClick={handleDrawerToggle}
-            sx={{ mr: 2, display: { sm: "none" } }}
+        {/* TOP APP BAR */}
+        <AppBar position="fixed" sx={{ zIndex: 1300 }}>
+          <Toolbar>
+            <IconButton
+              color="inherit"
+              edge="start"
+              onClick={handleDrawerToggle}
+              sx={{ mr: 2, display: { sm: "none" } }}
+            >
+              <MenuIcon />
+            </IconButton>
+
+            <Typography variant="h6" sx={{ flexGrow: 1 }}>
+              GramMitram
+            </Typography>
+
+            <Button
+              variant="contained"
+              color="error"
+              startIcon={<LogoutIcon />}
+              onClick={() => logout()}
+            >
+              Logout
+            </Button>
+          </Toolbar>
+        </AppBar>
+
+        {/* SIDEBAR */}
+        <Box component="nav" sx={{ width: { sm: drawerWidth } }}>
+          <Drawer
+            variant="temporary"
+            open={mobileOpen}
+            onClose={handleDrawerToggle}
+            sx={{
+              display: { xs: "block", sm: "none" },
+              "& .MuiDrawer-paper": { width: drawerWidth },
+            }}
           >
-            <MenuIcon />
-          </IconButton>
+            {drawer}
+          </Drawer>
 
-          <Typography variant="h6" sx={{ flexGrow: 1 }}>
-            GramMitram
-          </Typography>
-
-          <Button
-            variant="contained"
-            color="error"
-            startIcon={<LogoutIcon />}
-            onClick={() => logout()}
+          <Drawer
+            variant="permanent"
+            sx={{
+              display: { xs: "none", sm: "block" },
+              "& .MuiDrawer-paper": { width: drawerWidth },
+            }}
+            open
           >
-            Logout
-          </Button>
-        </Toolbar>
-      </AppBar>
+            {drawer}
+          </Drawer>
+        </Box>
 
-      {/* SIDEBAR */}
-      <Box component="nav" sx={{ width: { sm: drawerWidth } }}>
-        <Drawer
-          variant="temporary"
-          open={mobileOpen}
-          onClose={handleDrawerToggle}
-          sx={{
-            display: { xs: "block", sm: "none" },
-            "& .MuiDrawer-paper": { width: drawerWidth },
-          }}
-        >
-          {drawer}
-        </Drawer>
-
-        <Drawer
-          variant="permanent"
-          sx={{
-            display: { xs: "none", sm: "block" },
-            "& .MuiDrawer-paper": { width: drawerWidth },
-          }}
-          open
-        >
-          {drawer}
-        </Drawer>
-      </Box>
-
-      {/* MAIN CONTENT */}
-      <Box
-        component="main"
-        sx={{
-          flexGrow: 1,
-          p: 3,
-          mt: 8,
-          width: { sm: `calc(100% - ${drawerWidth}px)` },
-        }}
-      >
+        {/* MAIN CONTENT */}
         <Box
+          component="main"
           sx={{
-            transition: "all 0.25s ease",
-            opacity: isAnimating ? 0 : 1,
-            transform: isAnimating ? "translateY(10px)" : "translateY(0)",
+            flexGrow: 1,
+            p: 3,
+            mt: 8,
+            width: { sm: `calc(100% - ${drawerWidth}px)` },
           }}
         >
-          <Typography variant="h4" gutterBottom>
-            {activeTab}
-          </Typography>
+          <Box
+            sx={{
+              transition: "all 0.25s ease",
+              opacity: isAnimating ? 0 : 1,
+              transform: isAnimating ? "translateY(10px)" : "translateY(0)",
+            }}
+          >
+            <Typography variant="h4" gutterBottom>
+              {activeTab}
+            </Typography>
 
-          <Box sx={{ mt: 2 }}>{tabContentMap[activeTab]}</Box>
+            <Box sx={{ mt: 2 }}>{tabContentMap[activeTab]}</Box>
+          </Box>
         </Box>
       </Box>
-    </Box>
+    </AdminPanelProvider>
   );
 }

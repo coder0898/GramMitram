@@ -17,46 +17,23 @@ import {
   Typography,
   Button,
 } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import VisibilityIcon from "@mui/icons-material/Visibility";
+import { useStaff } from "../../context/StaffContext";
 
 const ServiceTab = () => {
-  const [servicesList, setServicesList] = useState([]);
-  const [selectedService, setSelectedService] = useState(null);
-  const [viewOpen, setViewOpen] = useState(false);
-
-  const [order, setOrder] = useState("asc");
-  const [orderBy, setOrderBy] = useState("service_name");
-
-  const [alert, setAlert] = useState({
-    open: false,
-    message: "",
-    severity: "success",
-  });
-
-  // LOAD SERVICES
-  useEffect(() => {
-    const stored = JSON.parse(localStorage.getItem("Services")) || [];
-    setServicesList(stored);
-  }, []);
-
-  // SORT
-  const handleSort = (column) => {
-    const isAsc = orderBy === column && order === "asc";
-    setOrder(isAsc ? "desc" : "asc");
-    setOrderBy(column);
-  };
-
-  const sortedServices = [...servicesList].sort((a, b) => {
-    if (a[orderBy] < b[orderBy]) return order === "asc" ? -1 : 1;
-    if (a[orderBy] > b[orderBy]) return order === "asc" ? 1 : -1;
-    return 0;
-  });
-
-  const handleView = (service) => {
-    setSelectedService(service);
-    setViewOpen(true);
-  };
+  const {
+    sortedServices,
+    order,
+    orderBy,
+    handleServiceSort,
+    selectedService,
+    viewOpen,
+    setViewOpen,
+    alert,
+    setAlert,
+    handleViewService,
+  } = useStaff();
 
   return (
     <Box sx={{ width: "100%" }}>
@@ -79,7 +56,7 @@ const ServiceTab = () => {
                 <TableSortLabel
                   active={orderBy === "service_name"}
                   direction={order}
-                  onClick={() => handleSort("service_name")}
+                  onClick={() => handleServiceSort("service_name")}
                 >
                   Service Name
                 </TableSortLabel>
@@ -97,7 +74,7 @@ const ServiceTab = () => {
                 <TableSortLabel
                   active={orderBy === "category"}
                   direction={order}
-                  onClick={() => handleSort("category")}
+                  onClick={() => handleServiceSort("category")}
                 >
                   Category
                 </TableSortLabel>
@@ -117,7 +94,6 @@ const ServiceTab = () => {
             {sortedServices.map((row) => (
               <TableRow key={row.id} hover>
                 <TableCell>{row.service_name}</TableCell>
-
                 <TableCell>{row.service_desc}</TableCell>
 
                 <TableCell>
@@ -147,7 +123,7 @@ const ServiceTab = () => {
                     size="small"
                     variant="contained"
                     startIcon={<VisibilityIcon />}
-                    onClick={() => handleView(row)}
+                    onClick={() => handleViewService(row)}
                   >
                     View
                   </Button>
@@ -166,8 +142,13 @@ const ServiceTab = () => {
         </Table>
       </TableContainer>
 
-      {/* VIEW DIALOG (READ-ONLY) */}
-      <Dialog open={viewOpen} fullWidth maxWidth="sm">
+      {/* VIEW DIALOG */}
+      <Dialog
+        open={viewOpen}
+        onClose={() => setViewOpen(false)}
+        fullWidth
+        maxWidth="sm"
+      >
         <DialogTitle>Service Details</DialogTitle>
         <DialogContent dividers>
           {selectedService && (

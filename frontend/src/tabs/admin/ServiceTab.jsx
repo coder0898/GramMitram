@@ -8,6 +8,7 @@ import {
   DialogContent,
   DialogTitle,
   FormControl,
+  IconButton,
   InputLabel,
   MenuItem,
   Paper,
@@ -25,18 +26,19 @@ import {
   Tabs,
   TextField,
   Typography,
-  IconButton,
 } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import { useAdmin } from "../../context/AdminContext";
 
 const ServiceTab = () => {
-  const [servicesList, setServicesList] = useState([]);
+  const { services, createService, updateService, deleteService } = useAdmin();
+
   const [tab, setTab] = useState(0);
 
-  const [services, setServices] = useState({
+  const [serviceForm, setServiceForm] = useState({
     service_name: "",
     service_desc: "",
     requiredDocuments: [],
@@ -53,34 +55,27 @@ const ServiceTab = () => {
   const [order, setOrder] = useState("asc");
   const [orderBy, setOrderBy] = useState("service_name");
 
-  // MODAL STATES
   const [viewOpen, setViewOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [selectedService, setSelectedService] = useState(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
-  // LOAD SERVICES
-  useEffect(() => {
-    const stored = JSON.parse(localStorage.getItem("Services")) || [];
-    setServicesList(stored);
-  }, []);
-
+  /* ================= SORT ================= */
   const handleSort = (column) => {
     const isAsc = orderBy === column && order === "asc";
     setOrder(isAsc ? "desc" : "asc");
     setOrderBy(column);
   };
 
-  const filteredServices = [...servicesList].sort((a, b) => {
+  const sortedServices = [...services].sort((a, b) => {
     if (a[orderBy] < b[orderBy]) return order === "asc" ? -1 : 1;
     if (a[orderBy] > b[orderBy]) return order === "asc" ? 1 : -1;
     return 0;
   });
 
-  //form reset
-  const handleFormReset = (e) => {
-    e.preventDefault();
-    setServices({
+  /* ================= FORM ACTIONS ================= */
+  const handleFormReset = () => {
+    setServiceForm({
       service_name: "",
       service_desc: "",
       requiredDocuments: [],
@@ -89,12 +84,11 @@ const ServiceTab = () => {
     });
   };
 
-  // CREATE SERVICE
   const handleFormSubmit = () => {
     if (
-      !services.service_name ||
-      !services.service_desc ||
-      !services.category
+      !serviceForm.service_name ||
+      !serviceForm.service_desc ||
+      !serviceForm.category
     ) {
       setAlert({
         open: true,
@@ -106,13 +100,11 @@ const ServiceTab = () => {
 
     const newService = {
       id: `SRV${Date.now()}`,
-      ...services,
+      ...serviceForm,
       createdAt: new Date().toISOString(),
     };
 
-    const updated = [...servicesList, newService];
-    setServicesList(updated);
-    localStorage.setItem("Services", JSON.stringify(updated));
+    createService(newService);
 
     setAlert({
       open: true,
@@ -120,30 +112,18 @@ const ServiceTab = () => {
       severity: "success",
     });
 
-    setServices({
-      service_name: "",
-      service_desc: "",
-      requiredDocuments: [],
-      category: "",
-      service_status: true,
-    });
+    handleFormReset();
   };
 
-  // VIEW
+  /* ================= VIEW / EDIT ================= */
   const handleView = (service) => {
     setSelectedService({ ...service });
     setEditMode(false);
     setViewOpen(true);
   };
 
-  // SAVE EDIT
   const handleSaveChanges = () => {
-    const updated = servicesList.map((s) =>
-      s.id === selectedService.id ? selectedService : s
-    );
-
-    setServicesList(updated);
-    localStorage.setItem("Services", JSON.stringify(updated));
+    updateService(selectedService);
 
     setEditMode(false);
     setViewOpen(false);
@@ -155,12 +135,9 @@ const ServiceTab = () => {
     });
   };
 
-  // DELETE
+  /* ================= DELETE ================= */
   const handleDelete = () => {
-    const updated = servicesList.filter((s) => s.id !== selectedService.id);
-
-    setServicesList(updated);
-    localStorage.setItem("Services", JSON.stringify(updated));
+    deleteService(selectedService.id);
 
     setDeleteConfirmOpen(false);
     setViewOpen(false);
@@ -237,10 +214,9 @@ const ServiceTab = () => {
             </TableHead>
 
             <TableBody>
-              {filteredServices.map((row) => (
+              {sortedServices.map((row) => (
                 <TableRow key={row.id} hover>
                   <TableCell>{row.service_name}</TableCell>
-
                   <TableCell>
                     {row.requiredDocuments.map((d) => (
                       <Chip
@@ -251,9 +227,7 @@ const ServiceTab = () => {
                       />
                     ))}
                   </TableCell>
-
                   <TableCell>{row.category}</TableCell>
-
                   <TableCell
                     sx={{
                       color: row.service_status ? "success.main" : "error.main",
@@ -262,7 +236,6 @@ const ServiceTab = () => {
                   >
                     {row.service_status ? "Active" : "Inactive"}
                   </TableCell>
-
                   <TableCell>
                     <Button
                       size="small"
@@ -276,7 +249,7 @@ const ServiceTab = () => {
                 </TableRow>
               ))}
 
-              {filteredServices.length === 0 && (
+              {sortedServices.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={5} align="center">
                     No services found
@@ -294,19 +267,18 @@ const ServiceTab = () => {
           <TextField
             fullWidth
             label="Service Name"
-            value={services.service_name}
+            value={serviceForm.service_name}
             onChange={(e) =>
-              setServices({ ...services, service_name: e.target.value })
+              setServiceForm({ ...serviceForm, service_name: e.target.value })
             }
             margin="normal"
           />
-
           <TextField
             fullWidth
             label="Service Description"
-            value={services.service_desc}
+            value={serviceForm.service_desc}
             onChange={(e) =>
-              setServices({ ...services, service_desc: e.target.value })
+              setServiceForm({ ...serviceForm, service_desc: e.target.value })
             }
             margin="normal"
           />
@@ -314,13 +286,9 @@ const ServiceTab = () => {
           <FormControl fullWidth margin="normal">
             <InputLabel>Category</InputLabel>
             <Select
-              value={services.category}
-              label="Category"
+              value={serviceForm.category}
               onChange={(e) =>
-                setServices((prev) => ({
-                  ...prev,
-                  category: e.target.value,
-                }))
+                setServiceForm({ ...serviceForm, category: e.target.value })
               }
             >
               <MenuItem value="agriculture">Agriculture</MenuItem>
@@ -334,13 +302,12 @@ const ServiceTab = () => {
             <InputLabel>Required Documents</InputLabel>
             <Select
               multiple
-              value={services.requiredDocuments}
-              label="Required Documents"
+              value={serviceForm.requiredDocuments}
               onChange={(e) =>
-                setServices((prev) => ({
-                  ...prev,
+                setServiceForm({
+                  ...serviceForm,
                   requiredDocuments: e.target.value,
-                }))
+                })
               }
             >
               <MenuItem value="aadhaar">Aadhaar Card</MenuItem>
@@ -357,19 +324,20 @@ const ServiceTab = () => {
             <Typography
               sx={{
                 mr: 2,
-                color: services.service_status ? "success.main" : "error.main",
+                color: serviceForm.service_status
+                  ? "success.main"
+                  : "error.main",
               }}
             >
-              Status: {services.service_status ? "Active" : "Inactive"}
+              Status: {serviceForm.service_status ? "Active" : "Inactive"}
             </Typography>
-
             <Switch
-              checked={services.service_status}
+              checked={serviceForm.service_status}
               onChange={(e) =>
-                setServices((prev) => ({
-                  ...prev,
+                setServiceForm({
+                  ...serviceForm,
                   service_status: e.target.checked,
-                }))
+                })
               }
             />
           </Box>
@@ -382,7 +350,6 @@ const ServiceTab = () => {
             >
               Save Service
             </Button>
-
             <Button
               variant="contained"
               color="warning"
@@ -403,36 +370,28 @@ const ServiceTab = () => {
             justifyContent: "space-between",
           }}
         >
-          {/* TITLE */}
           <Box component="span" sx={{ fontWeight: 600 }}>
             Service Details
           </Box>
-
-          {/* ACTIONS */}
           <Box>
             <IconButton
               onClick={() =>
                 editMode ? handleSaveChanges() : setEditMode(true)
               }
-              title={editMode ? "Save" : "Edit"}
             >
               {editMode ? "Save" : <EditIcon />}
             </IconButton>
-
             <IconButton
               color="error"
               onClick={() => setDeleteConfirmOpen(true)}
-              title="Delete"
             >
               <DeleteIcon />
             </IconButton>
-
             <IconButton
               onClick={() => {
                 setViewOpen(false);
                 setEditMode(false);
               }}
-              title="Close"
             >
               ✕
             </IconButton>
@@ -455,7 +414,6 @@ const ServiceTab = () => {
                   })
                 }
               />
-
               <TextField
                 fullWidth
                 label="Description"
@@ -469,13 +427,11 @@ const ServiceTab = () => {
                   })
                 }
               />
-
               <FormControl fullWidth margin="normal">
                 <InputLabel>Category</InputLabel>
                 <Select
                   disabled={!editMode}
                   value={selectedService.category}
-                  label="Category"
                   onChange={(e) =>
                     setSelectedService({
                       ...selectedService,
@@ -489,7 +445,6 @@ const ServiceTab = () => {
                   <MenuItem value="health">Health</MenuItem>
                 </Select>
               </FormControl>
-
               <Box sx={{ display: "flex", alignItems: "center", mt: 2 }}>
                 <Typography sx={{ mr: 2, fontWeight: 500 }}>Status</Typography>
                 <Switch

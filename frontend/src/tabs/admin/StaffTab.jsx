@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   Box,
   Button,
@@ -23,17 +23,12 @@ import {
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { useAuth } from "../../context/AuthContext";
+import { useAdmin } from "../../context/AdminContext";
 
 const StaffTab = () => {
-  const { signup } = useAuth();
-
+  const { staffList, signupStaff, deleteStaff } = useAdmin();
   const [tab, setTab] = useState(0);
 
-  // staff list for table
-  const [staffList, setStaffList] = useState([]);
-
-  // signup form state
   const [staffForm, setStaffForm] = useState({
     username: "",
     email: "",
@@ -48,22 +43,8 @@ const StaffTab = () => {
     message: "",
   });
 
-  /* ================= LOAD STAFF FROM LOCALSTORAGE ================= */
-  const loadStaff = () => {
-    const signupDetails =
-      JSON.parse(localStorage.getItem("signupDetails")) || [];
-    const staffUsers = signupDetails.filter((user) => user.role === "staff");
-    setStaffList(staffUsers);
-  };
-
-  useEffect(() => {
-    loadStaff();
-  }, []);
-
-  /* ================= STAFF SIGNUP ================= */
   const handleSubmitSignup = (e) => {
     e.preventDefault();
-
     if (staffForm.password !== staffForm.confirmPassword) {
       setAlert({
         open: true,
@@ -73,7 +54,7 @@ const StaffTab = () => {
       return;
     }
 
-    const result = signup(
+    const result = signupStaff(
       staffForm.username,
       staffForm.email,
       staffForm.password,
@@ -88,8 +69,7 @@ const StaffTab = () => {
     });
 
     if (result.success) {
-      loadStaff(); // 🔥 auto refresh table
-      setTab(0); // go back to table
+      setTab(0);
       setStaffForm({
         username: "",
         email: "",
@@ -100,20 +80,12 @@ const StaffTab = () => {
     }
   };
 
-  /* ================= DELETE STAFF ================= */
   const handleDeleteStaff = (email) => {
-    const signupDetails =
-      JSON.parse(localStorage.getItem("signupDetails")) || [];
-
-    const updated = signupDetails.filter((user) => user.email !== email);
-
-    localStorage.setItem("signupDetails", JSON.stringify(updated));
-    loadStaff(); // 🔥 auto refresh table
+    deleteStaff(email);
   };
 
   return (
     <Box sx={{ width: "100%" }}>
-      {/* ================= TABS ================= */}
       <Tabs
         value={tab}
         onChange={(e, newValue) => setTab(newValue)}
@@ -123,13 +95,11 @@ const StaffTab = () => {
         <Tab label="Staff Sign Up" />
       </Tabs>
 
-      {/* ================= TAB 1: STAFF TABLE ================= */}
       {tab === 0 && (
         <Box sx={{ mt: 3 }}>
           <Typography variant="h6" gutterBottom>
             View All Staff
           </Typography>
-
           <TableContainer component={Paper}>
             <Table>
               <TableHead sx={{ backgroundColor: "primary.main" }}>
@@ -142,7 +112,6 @@ const StaffTab = () => {
                   <TableCell sx={{ color: "#fff" }}>Action</TableCell>
                 </TableRow>
               </TableHead>
-
               <TableBody>
                 {staffList.map((staff, index) => (
                   <TableRow key={staff.email}>
@@ -150,9 +119,7 @@ const StaffTab = () => {
                     <TableCell>{staff.username}</TableCell>
                     <TableCell>{staff.email}</TableCell>
                     <TableCell>{staff.role}</TableCell>
-                    <TableCell>
-                      {staff.createdAt ? staff.createdAt : "---"}
-                    </TableCell>
+                    <TableCell>{staff.createdAt || "---"}</TableCell>
                     <TableCell>
                       <IconButton
                         color="error"
@@ -163,10 +130,9 @@ const StaffTab = () => {
                     </TableCell>
                   </TableRow>
                 ))}
-
                 {staffList.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={5} align="center">
+                    <TableCell colSpan={6} align="center">
                       No staff found
                     </TableCell>
                   </TableRow>
@@ -177,7 +143,6 @@ const StaffTab = () => {
         </Box>
       )}
 
-      {/* ================= TAB 2: STAFF SIGNUP ================= */}
       {tab === 1 && (
         <Box sx={{ mt: 3 }}>
           {alert.open && (
@@ -202,7 +167,6 @@ const StaffTab = () => {
             <Typography variant="h5" fontWeight={700} textAlign="center">
               Create Staff Account
             </Typography>
-
             <TextField
               label="User Name"
               size="small"
@@ -211,7 +175,6 @@ const StaffTab = () => {
                 setStaffForm({ ...staffForm, username: e.target.value })
               }
             />
-
             <TextField
               label="Email"
               type="email"
@@ -221,7 +184,6 @@ const StaffTab = () => {
                 setStaffForm({ ...staffForm, email: e.target.value })
               }
             />
-
             <FormControl>
               <InputLabel>Role</InputLabel>
               <Select
@@ -234,7 +196,6 @@ const StaffTab = () => {
                 <MenuItem value="staff">Staff</MenuItem>
               </Select>
             </FormControl>
-
             <TextField
               label="Password"
               type="password"
@@ -244,17 +205,13 @@ const StaffTab = () => {
                 setStaffForm({ ...staffForm, password: e.target.value })
               }
             />
-
             <TextField
               label="Confirm Password"
               type="password"
               size="small"
               value={staffForm.confirmPassword}
               onChange={(e) =>
-                setStaffForm({
-                  ...staffForm,
-                  confirmPassword: e.target.value,
-                })
+                setStaffForm({ ...staffForm, confirmPassword: e.target.value })
               }
             />
 
@@ -267,7 +224,6 @@ const StaffTab = () => {
               >
                 Sign Up
               </Button>
-
               <Button
                 variant="contained"
                 fullWidth
