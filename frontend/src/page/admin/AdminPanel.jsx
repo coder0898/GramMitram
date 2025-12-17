@@ -64,16 +64,6 @@ export default function AdminPanelLayout() {
     setValue(newValue);
   };
 
-  const DashboardContent = () => (
-    <Typography>Dashboard overview, stats, charts...</Typography>
-  );
-
-  const StaffManagementContent = () => (
-    <Typography>Staff data, roles, permissions</Typography>
-  );
-
-  const ProfileContent = () => <Typography>User profile details</Typography>;
-
   const tabContentMap = {
     Dashboard: <Dashboard />,
     "Service Management": <ServiceTab />,
