@@ -26,7 +26,6 @@ import Dashboard from "../../tabs/staff/Dashboard";
 import ServiceTab from "../../tabs/staff/ServiceTab";
 import ApplicationTab from "../../tabs/staff/ApplicationTab";
 import Profile from "../../tabs/staff/ProfileTab";
-import { StaffProvider } from "../../context/StaffContext";
 
 const drawerWidth = 290;
 
@@ -104,89 +103,87 @@ const StaffPanel = () => {
 
   return (
     <>
-      <StaffProvider>
-        <Box sx={{ display: "flex" }}>
-          <CssBaseline />
+      <Box sx={{ display: "flex" }}>
+        <CssBaseline />
 
-          {/* TOP APP BAR */}
-          <AppBar position="fixed" sx={{ zIndex: 1300 }}>
-            <Toolbar>
-              <IconButton
-                color="inherit"
-                edge="start"
-                onClick={handleDrawerToggle}
-                sx={{ mr: 2, display: { sm: "none" } }}
-              >
-                <MenuIcon />
-              </IconButton>
-
-              <Typography variant="h6" sx={{ flexGrow: 1 }}>
-                GramMitram
-              </Typography>
-
-              <Button
-                variant="contained"
-                color="error"
-                startIcon={<LogoutIcon />}
-                onClick={() => logout()}
-              >
-                Logout
-              </Button>
-            </Toolbar>
-          </AppBar>
-
-          {/* SIDEBAR */}
-          <Box component="nav" sx={{ width: { sm: drawerWidth } }}>
-            <Drawer
-              variant="temporary"
-              open={mobileOpen}
-              onClose={handleDrawerToggle}
-              sx={{
-                display: { xs: "block", sm: "none" },
-                "& .MuiDrawer-paper": { width: drawerWidth },
-              }}
+        {/* TOP APP BAR */}
+        <AppBar position="fixed" sx={{ zIndex: 1300 }}>
+          <Toolbar>
+            <IconButton
+              color="inherit"
+              edge="start"
+              onClick={handleDrawerToggle}
+              sx={{ mr: 2, display: { sm: "none" } }}
             >
-              {drawer}
-            </Drawer>
+              <MenuIcon />
+            </IconButton>
 
-            <Drawer
-              variant="permanent"
-              sx={{
-                display: { xs: "none", sm: "block" },
-                "& .MuiDrawer-paper": { width: drawerWidth },
-              }}
-              open
+            <Typography variant="h6" sx={{ flexGrow: 1 }}>
+              GramMitram
+            </Typography>
+
+            <Button
+              variant="contained"
+              color="error"
+              startIcon={<LogoutIcon />}
+              onClick={() => logout()}
             >
-              {drawer}
-            </Drawer>
-          </Box>
+              Logout
+            </Button>
+          </Toolbar>
+        </AppBar>
 
-          {/* MAIN CONTENT */}
-          <Box
-            component="main"
+        {/* SIDEBAR */}
+        <Box component="nav" sx={{ width: { sm: drawerWidth } }}>
+          <Drawer
+            variant="temporary"
+            open={mobileOpen}
+            onClose={handleDrawerToggle}
             sx={{
-              flexGrow: 1,
-              p: 3,
-              mt: 8,
-              width: { sm: `calc(100% - ${drawerWidth}px)` },
+              display: { xs: "block", sm: "none" },
+              "& .MuiDrawer-paper": { width: drawerWidth },
             }}
           >
-            <Box
-              sx={{
-                transition: "all 0.25s ease",
-                opacity: isAnimating ? 0 : 1,
-                transform: isAnimating ? "translateY(10px)" : "translateY(0)",
-              }}
-            >
-              <Typography variant="h4" gutterBottom>
-                {activeTab}
-              </Typography>
+            {drawer}
+          </Drawer>
 
-              <Box sx={{ mt: 2 }}>{tabContentMap[activeTab]}</Box>
-            </Box>
+          <Drawer
+            variant="permanent"
+            sx={{
+              display: { xs: "none", sm: "block" },
+              "& .MuiDrawer-paper": { width: drawerWidth },
+            }}
+            open
+          >
+            {drawer}
+          </Drawer>
+        </Box>
+
+        {/* MAIN CONTENT */}
+        <Box
+          component="main"
+          sx={{
+            flexGrow: 1,
+            p: 3,
+            mt: 8,
+            width: { sm: `calc(100% - ${drawerWidth}px)` },
+          }}
+        >
+          <Box
+            sx={{
+              transition: "all 0.25s ease",
+              opacity: isAnimating ? 0 : 1,
+              transform: isAnimating ? "translateY(10px)" : "translateY(0)",
+            }}
+          >
+            <Typography variant="h4" gutterBottom>
+              {activeTab}
+            </Typography>
+
+            <Box sx={{ mt: 2 }}>{tabContentMap[activeTab]}</Box>
           </Box>
         </Box>
-      </StaffProvider>
+      </Box>
     </>
   );
 };
