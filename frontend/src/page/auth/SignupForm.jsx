@@ -1,3 +1,149 @@
+// import React, { useEffect, useState } from "react";
+// import {
+//   Alert,
+//   Button,
+//   FormControl,
+//   IconButton,
+//   Stack,
+//   TextField,
+//   Typography,
+// } from "@mui/material";
+// import { useAuth } from "../../context/AuthContext";
+// import CloseIcon from "@mui/icons-material/Close";
+
+// const SignupForm = () => {
+//   const { signup } = useAuth();
+
+//   const [signupData, setSignupData] = useState({
+//     username: "",
+//     email: "",
+//     password: "",
+//     confirmPassword: "",
+//   });
+
+//   const [alert, setAlert] = useState({
+//     open: false,
+//     severity: "",
+//     message: "",
+//   });
+
+//   useEffect(() => {
+//     if (alert.open) {
+//       const timer = setTimeout(() => setAlert({ ...alert, open: false }), 3000);
+//       return () => clearTimeout(timer);
+//     }
+//   }, [alert.open]);
+
+//   const onSubmitHandler = (e) => {
+//     e.preventDefault();
+
+//     const result = signup(
+//       signupData.username,
+//       signupData.email,
+//       signupData.password,
+//       signupData.confirmPassword
+//     );
+
+//     setAlert({
+//       open: true,
+//       severity: result.success ? "success" : "error",
+//       message: result.message,
+//     });
+
+//     setSignupData({
+//       username: "",
+//       email: "",
+//       password: "",
+//       confirmPassword: "",
+//     });
+//   };
+
+//   return (
+//     <>
+//       {alert.open && (
+//         <Alert
+//           severity={alert.severity}
+//           action={
+//             <IconButton
+//               color="inherit"
+//               size="small"
+//               onClick={() => setAlert({ ...alert, open: false })}
+//             >
+//               <CloseIcon fontSize="inherit" />
+//             </IconButton>
+//           }
+//         >
+//           {alert.message}
+//         </Alert>
+//       )}
+
+//       <form onSubmit={onSubmitHandler}>
+//         <Stack spacing={2}>
+//           <Typography variant="h5" fontWeight={700} textAlign="center">
+//             Create Your Account
+//           </Typography>
+
+//           <FormControl fullWidth>
+//             <TextField
+//               label="User Name"
+//               size="small"
+//               value={signupData.username}
+//               onChange={(e) =>
+//                 setSignupData({ ...signupData, username: e.target.value })
+//               }
+//             />
+//           </FormControl>
+
+//           <FormControl fullWidth>
+//             <TextField
+//               label="Email"
+//               type="email"
+//               size="small"
+//               value={signupData.email}
+//               onChange={(e) =>
+//                 setSignupData({ ...signupData, email: e.target.value })
+//               }
+//             />
+//           </FormControl>
+
+//           <FormControl fullWidth>
+//             <TextField
+//               label="Password"
+//               type="password"
+//               size="small"
+//               value={signupData.password}
+//               onChange={(e) =>
+//                 setSignupData({ ...signupData, password: e.target.value })
+//               }
+//             />
+//           </FormControl>
+
+//           <FormControl fullWidth>
+//             <TextField
+//               label="Confirm Password"
+//               type="password"
+//               size="small"
+//               value={signupData.confirmPassword}
+//               onChange={(e) =>
+//                 setSignupData({
+//                   ...signupData,
+//                   confirmPassword: e.target.value,
+//                 })
+//               }
+//             />
+//           </FormControl>
+
+//           <Button variant="contained" type="submit" fullWidth>
+//             Sign Up
+//           </Button>
+//         </Stack>
+//       </form>
+//     </>
+//   );
+// };
+
+// export default SignupForm;
+
 import React, { useEffect, useState } from "react";
 import {
   Alert,
@@ -27,17 +173,23 @@ const SignupForm = () => {
     message: "",
   });
 
+  const [loading, setLoading] = useState(false);
+
   useEffect(() => {
     if (alert.open) {
-      const timer = setTimeout(() => setAlert({ ...alert, open: false }), 3000);
+      const timer = setTimeout(
+        () => setAlert((prev) => ({ ...prev, open: false })),
+        3000
+      );
       return () => clearTimeout(timer);
     }
   }, [alert.open]);
 
-  const onSubmitHandler = (e) => {
+  const onSubmitHandler = async (e) => {
     e.preventDefault();
+    setLoading(true);
 
-    const result = signup(
+    const result = await signup(
       signupData.username,
       signupData.email,
       signupData.password,
@@ -50,12 +202,16 @@ const SignupForm = () => {
       message: result.message,
     });
 
-    setSignupData({
-      username: "",
-      email: "",
-      password: "",
-      confirmPassword: "",
-    });
+    setLoading(false);
+
+    if (result.success) {
+      setSignupData({
+        username: "",
+        email: "",
+        password: "",
+        confirmPassword: "",
+      });
+    }
   };
 
   return (
@@ -63,11 +219,12 @@ const SignupForm = () => {
       {alert.open && (
         <Alert
           severity={alert.severity}
+          sx={{ mb: 2 }}
           action={
             <IconButton
               color="inherit"
               size="small"
-              onClick={() => setAlert({ ...alert, open: false })}
+              onClick={() => setAlert((prev) => ({ ...prev, open: false }))}
             >
               <CloseIcon fontSize="inherit" />
             </IconButton>
@@ -87,6 +244,7 @@ const SignupForm = () => {
             <TextField
               label="User Name"
               size="small"
+              required
               value={signupData.username}
               onChange={(e) =>
                 setSignupData({ ...signupData, username: e.target.value })
@@ -99,6 +257,7 @@ const SignupForm = () => {
               label="Email"
               type="email"
               size="small"
+              required
               value={signupData.email}
               onChange={(e) =>
                 setSignupData({ ...signupData, email: e.target.value })
@@ -111,6 +270,7 @@ const SignupForm = () => {
               label="Password"
               type="password"
               size="small"
+              required
               value={signupData.password}
               onChange={(e) =>
                 setSignupData({ ...signupData, password: e.target.value })
@@ -123,6 +283,7 @@ const SignupForm = () => {
               label="Confirm Password"
               type="password"
               size="small"
+              required
               value={signupData.confirmPassword}
               onChange={(e) =>
                 setSignupData({
@@ -133,8 +294,13 @@ const SignupForm = () => {
             />
           </FormControl>
 
-          <Button variant="contained" type="submit" fullWidth>
-            Sign Up
+          <Button
+            variant="contained"
+            type="submit"
+            fullWidth
+            disabled={loading}
+          >
+            {loading ? "Creating account..." : "Sign Up"}
           </Button>
         </Stack>
       </form>
