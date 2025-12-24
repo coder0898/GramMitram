@@ -100,7 +100,6 @@ const ServiceTab = () => {
     }
 
     createService({
-      id: `SRV${Date.now()}`,
       ...serviceForm,
       createdAt: new Date().toISOString(),
     });
@@ -208,7 +207,7 @@ const ServiceTab = () => {
                 <TableRow key={service.id} hover>
                   <TableCell>{service.service_name}</TableCell>
                   <TableCell>
-                    {service.requiredDocuments.map((doc) => (
+                    {service.requiredDocuments?.map((doc) => (
                       <Chip
                         key={doc}
                         label={doc}

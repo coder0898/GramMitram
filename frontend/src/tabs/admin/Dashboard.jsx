@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Box, Grid, Card, CardContent, Typography, Paper } from "@mui/material";
 import {
   BarChart,
@@ -15,9 +15,43 @@ import {
 import { useAdmin } from "../../context/AdminContext";
 
 const Dashboard = () => {
-  const { dashboardStats, chartData } = useAdmin();
+  const { dashboardStats, applications, services } = useAdmin();
 
   const COLORS = ["#FFBB28", "#00C49F", "#FF8042"];
+
+  // Compute chart data dynamically from context
+  const chartData = useMemo(() => {
+    // Applications per service
+    const applicationsPerService = services.map((service) => {
+      return {
+        name: service.name || service.service,
+        count: applications.filter(
+          (app) => app.service === (service.name || service.service)
+        ).length,
+      };
+    });
+
+    // Application status distribution
+    const statusCounts = applications.reduce(
+      (acc, app) => {
+        if (app.status === "submitted") acc.submitted += 1;
+        else if (app.status === "under_review") acc.under_review += 1;
+        else if (app.status === "approved") acc.approved += 1;
+        else if (app.status === "rejected") acc.rejected += 1;
+        return acc;
+      },
+      { submitted: 0, under_review: 0, approved: 0, rejected: 0 }
+    );
+
+    const applicationStatusDistribution = [
+      { name: "Submitted", value: statusCounts.submitted },
+      { name: "Under Review", value: statusCounts.under_review },
+      { name: "Approved", value: statusCounts.approved },
+      { name: "Rejected", value: statusCounts.rejected },
+    ];
+
+    return { applicationsPerService, applicationStatusDistribution };
+  }, [applications, services]);
 
   const cardData = [
     {
@@ -31,8 +65,8 @@ const Dashboard = () => {
       color: "success.main",
     },
     {
-      label: "InActive Services",
-      value: dashboardStats.inActiveServices,
+      label: "Inactive Services",
+      value: dashboardStats.inactiveServices,
       color: "error.main",
     },
     {
@@ -41,14 +75,14 @@ const Dashboard = () => {
       color: "primary.main",
     },
     {
-      label: "Approved Applications",
-      value: dashboardStats.approvedApplications,
-      color: "success.main",
+      label: "Applications Under Review",
+      value: applications.filter((a) => a.status === "under_review").length,
+      color: "warning.main",
     },
     {
-      label: "Rejected Applications",
-      value: dashboardStats.rejectedApplications,
-      color: "error.main",
+      label: "Submitted Applications",
+      value: applications.filter((a) => a.status === "submitted").length,
+      color: "info.main",
     },
   ];
 

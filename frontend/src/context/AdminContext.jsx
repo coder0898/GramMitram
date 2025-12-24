@@ -5,222 +5,173 @@ import React, {
   useState,
   useMemo,
 } from "react";
+import {
+  collection,
+  getDocs,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+} from "firebase/firestore";
+
+import { db } from "../firebase/firebase";
+import { useAuth } from "./AuthContext";
 
 const AdminPanelContext = createContext();
 export const useAdmin = () => useContext(AdminPanelContext);
 
 export const AdminPanelProvider = ({ children }) => {
-  const [isInitialized, setIsInitialized] = useState(false);
+  const { currentUser } = useAuth();
 
-  /* Applications */
   const [applications, setApplications] = useState([]);
-  const [selectedApplication, setSelectedApplication] = useState(null);
-
-  /* Users */
-  const [signupDetails, setSignupDetails] = useState([]);
-  const [staffList, setStaffList] = useState([]);
-
-  /* Services */
   const [services, setServices] = useState([]);
+  const [staffList, setStaffList] = useState([]);
+  const [selectedApplication, setSelectedApplication] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const addUser = (user) => {
-    const updated = [...signupDetails, user];
-    setSignupDetails(updated);
-    localStorage.setItem("signupDetails", JSON.stringify(updated));
+  /* ================= ADMIN GUARD ================= */
+  const isAdmin = currentUser?.role === "admin";
+
+  /* ================= FETCH DATA ================= */
+  useEffect(() => {
+    if (!isAdmin) return;
+
+    const fetchData = async () => {
+      try {
+        const [appsSnap, servicesSnap, usersSnap] = await Promise.all([
+          getDocs(collection(db, "applications")),
+          getDocs(collection(db, "services")),
+          getDocs(collection(db, "users")),
+        ]);
+
+        setApplications(appsSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
+
+        setServices(servicesSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
+
+        const users = usersSnap.docs.map((d) => ({
+          id: d.id,
+          ...d.data(),
+        }));
+
+        setStaffList(users.filter((u) => u.role === "staff"));
+      } catch (err) {
+        console.error("Admin fetch error:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [isAdmin]);
+
+  /* ================= APPLICATION ACTIONS ================= */
+  const updateApplication = async (id, data) => {
+    await updateDoc(doc(db, "applications", id), data);
+    setApplications((prev) =>
+      prev.map((a) => (a.id === id ? { ...a, ...data } : a))
+    );
   };
 
-  /* Initialize data from localStorage */
-  useEffect(() => {
-    const storedApplications = JSON.parse(
-      localStorage.getItem("applications")
-    ) || [
-      {
-        id: "APP001",
-        applicantName: "Ravi Kumar",
-        service: "Water Supply",
-        status: "submitted",
-        staff: "",
-        submittedDate: "12-09-2025",
-        documents: ["Aadhaar Card", "Electricity Bill"],
-        remarks: "",
-        disableView: false,
-      },
-    ];
-
-    const storedSignup = JSON.parse(localStorage.getItem("signupDetails")) || [
-      {
-        username: "admin",
-        email: "admin@example.com",
-        password: "admin123",
-        role: "admin",
-        createdAt: new Date().toISOString(),
-      },
-    ];
-
-    const storedServices = JSON.parse(localStorage.getItem("services")) || [];
-
-    setApplications(storedApplications);
-    setSignupDetails(storedSignup);
-    setStaffList(storedSignup.filter((u) => u.role === "staff"));
-    setServices(storedServices);
-
-    setIsInitialized(true);
-  }, []);
-
-  /* Persist changes */
-  useEffect(() => {
-    if (isInitialized)
-      localStorage.setItem("applications", JSON.stringify(applications));
-  }, [applications, isInitialized]);
-  useEffect(() => {
-    if (isInitialized)
-      localStorage.setItem("signupDetails", JSON.stringify(signupDetails));
-  }, [signupDetails, isInitialized]);
-  useEffect(() => {
-    if (isInitialized)
-      localStorage.setItem("services", JSON.stringify(services));
-  }, [services, isInitialized]);
-
-  /* Application actions */
-  const updateApplication = (id, data) =>
-    setApplications((prev) =>
-      prev.map((app) => (app.id === id ? { ...app, ...data } : app))
-    );
   const assignStaff = (appId, staffName) =>
     updateApplication(appId, {
       staff: staffName,
       status: "under_review",
-      disableView: false,
     });
-  const approveApplication = (appId, remarks) =>
-    updateApplication(appId, {
-      status: "approved",
-      remarks,
-      staff: "Admin",
-      disableView: true,
-    });
-  const rejectApplication = (appId, remarks) =>
-    updateApplication(appId, {
-      status: "rejected",
-      remarks,
-      staff: "Admin",
-      disableView: true,
-    });
+
   const filterApplications = (category, status) =>
     applications.filter(
       (app) =>
-        (!category || app.service.toLowerCase() === category.toLowerCase()) &&
+        (!category || app.service === category) &&
         (!status || app.status === status)
     );
 
-  /* Staff actions */
-  const signupStaff = (
-    username,
-    email,
-    password,
-    confirmPassword,
-    role = "staff"
-  ) => {
-    if (!username || !email || !password || !confirmPassword)
-      return { success: false, message: "All fields are required" };
-    if (password !== confirmPassword)
-      return { success: false, message: "Passwords do not match" };
-    if (signupDetails.some((u) => u.email === email))
-      return { success: false, message: "Email already exists" };
+  /* ================= STAFF ================= */
+  const signupStaff = async ({ username, email, role, password }) => {
+    try {
+      const newStaffRef = await addDoc(collection(db, "users"), {
+        username,
+        email,
+        role,
+        password, // consider hashing in production
+        createdAt: new Date(),
+      });
 
-    const newStaff = {
-      username,
-      email,
-      password,
-      role,
-      createdAt: new Date().toISOString(),
-    };
-    const updatedSignup = [...signupDetails, newStaff];
-    setSignupDetails(updatedSignup);
-    setStaffList(updatedSignup.filter((u) => u.role === "staff"));
-    return { success: true, message: "Staff created successfully" };
+      const newStaff = { id: newStaffRef.id, username, email, role };
+      setStaffList((prev) => [...prev, newStaff]);
+
+      return { success: true, message: "Staff signed up successfully!" };
+    } catch (err) {
+      console.error("Signup error:", err);
+      return { success: false, message: "Failed to signup staff." };
+    }
   };
-  const deleteStaff = (email) => {
-    const updatedSignup = signupDetails.filter(
-      (u) => !(u.email === email && u.role === "staff")
-    );
-    setSignupDetails(updatedSignup);
-    setStaffList(updatedSignup.filter((u) => u.role === "staff"));
+  // const deleteStaff = async (uid) => {
+  //   await deleteDoc(doc(db, "users", uid));
+  //   setStaffList((prev) => prev.filter((s) => s.id !== uid));
+  // };
+
+  const deleteStaff = async (staffId) => {
+    try {
+      await deleteDoc(doc(db, "users", staffId)); // use Firestore doc ID
+      setStaffList((prev) => prev.filter((s) => s.id !== staffId));
+
+      return { success: true, message: "Staff deleted successfully" };
+    } catch (err) {
+      console.error("Delete staff error:", err);
+      return { success: false, message: "Failed to delete staff" };
+    }
   };
 
-  /* Service actions */
-  const createService = (service) => setServices((prev) => [...prev, service]);
-  const updateService = (updatedService) =>
-    setServices((prev) =>
-      prev.map((s) => (s.id === updatedService.id ? updatedService : s))
-    );
-  const deleteService = (id) =>
+  /* ================= SERVICES ================= */
+  const createService = async (service) => {
+    const ref = await addDoc(collection(db, "services"), service);
+    setServices((prev) => [...prev, { id: ref.id, ...service }]);
+  };
+
+  const updateService = async (service) => {
+    await updateDoc(doc(db, "services", service.id), service);
+    setServices((prev) => prev.map((s) => (s.id === service.id ? service : s)));
+  };
+
+  const deleteService = async (id) => {
+    await deleteDoc(doc(db, "services", id));
     setServices((prev) => prev.filter((s) => s.id !== id));
+  };
 
-  /* Dashboard stats */
-  const dashboardStats = useMemo(() => {
-    return {
+  /* ================= DASHBOARD ================= */
+  const dashboardStats = useMemo(
+    () => ({
       totalServices: services.length,
       activeServices: services.filter((s) => s.service_status).length,
-      inActiveServices:
+      inactiveServices:
         services.length - services.filter((s) => s.service_status).length,
       totalApplications: applications.length,
       approvedApplications: applications.filter((a) => a.status === "approved")
         .length,
       rejectedApplications: applications.filter((a) => a.status === "rejected")
         .length,
-    };
-  }, [services, applications]);
-
-  const chartData = useMemo(
-    () => ({
-      applicationsPerService: services.map((s) => ({
-        name: s.service_name,
-        count: applications.filter((a) => a.service === s.service_name).length,
-      })),
-      applicationStatusDistribution: [
-        {
-          name: "Submitted",
-          value: applications.filter((a) => a.status === "submitted").length,
-        },
-        {
-          name: "Under Review",
-          value: applications.filter((a) => a.status === "under_review").length,
-        },
-        {
-          name: "Approved",
-          value: applications.filter((a) => a.status === "approved").length,
-        },
-        {
-          name: "Rejected",
-          value: applications.filter((a) => a.status === "rejected").length,
-        },
-      ],
     }),
     [services, applications]
   );
 
+  if (!isAdmin || loading) return null;
+
   return (
     <AdminPanelContext.Provider
       value={{
-        addUser,
         applications,
+        services,
+        staffList,
         selectedApplication,
         setSelectedApplication,
-        signupDetails,
-        staffList,
-        services,
         assignStaff,
-        approveApplication,
-        rejectApplication,
-        filterApplications,
         signupStaff,
-        deleteStaff,
+        filterApplications,
         createService,
         updateService,
         deleteService,
+        deleteStaff,
         dashboardStats,
-        chartData,
       }}
     >
       {children}

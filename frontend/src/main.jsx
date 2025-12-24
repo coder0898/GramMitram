@@ -11,15 +11,15 @@ import { UserProvider } from "./context/UserContext.jsx";
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <BrowserRouter>
-      <AdminPanelProvider>
-        <AuthProvider>
+      <AuthProvider>
+        <AdminPanelProvider>
           <StaffProvider>
             <UserProvider>
               <App />
             </UserProvider>
           </StaffProvider>
-        </AuthProvider>
-      </AdminPanelProvider>
+        </AdminPanelProvider>
+      </AuthProvider>
     </BrowserRouter>
   </StrictMode>
 );

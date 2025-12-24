@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import {
   Box,
   Button,
-  Chip,
   Dialog,
   DialogActions,
   DialogContent,
@@ -31,43 +30,22 @@ const ApplicationTab = () => {
     selectedApplication,
     setSelectedApplication,
     assignStaff,
-    approveApplication,
-    rejectApplication,
     filterApplications,
   } = useAdmin();
 
   const [tab, setTab] = useState(0);
   const [categoryFilter, setCategoryFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
-
   const [staffModalOpen, setStaffModalOpen] = useState(false);
-  const [actionModalOpen, setActionModalOpen] = useState(false);
-  const [actionType, setActionType] = useState("");
   const [selectedStaff, setSelectedStaff] = useState(null);
 
   const filteredApplications = filterApplications(categoryFilter, statusFilter);
 
-  const handleAssignStaff = () => {
+  const handleAssignStaff = async () => {
     if (!selectedStaff) return;
-    assignStaff(selectedApplication.id, selectedStaff.username);
+    await assignStaff(selectedApplication.id, selectedStaff.username);
     setStaffModalOpen(false);
     setSelectedStaff(null);
-    setTab(0);
-  };
-
-  const handleAction = () => {
-    if (!selectedApplication.remarks?.trim()) {
-      alert("Please add remarks before proceeding.");
-      return;
-    }
-
-    actionType === "approve"
-      ? approveApplication(selectedApplication.id, selectedApplication.remarks)
-      : rejectApplication(selectedApplication.id, selectedApplication.remarks);
-
-    setActionModalOpen(false);
-    setSelectedApplication(null);
-    setTab(0);
   };
 
   return (
@@ -77,7 +55,7 @@ const ApplicationTab = () => {
         <Tab label="Application Details" disabled={!selectedApplication} />
       </Tabs>
 
-      {/* TAB 0 */}
+      {/* All Applications Tab */}
       {tab === 0 && (
         <Box sx={{ mt: 3 }}>
           <Typography variant="h6">View All Applications</Typography>
@@ -116,11 +94,11 @@ const ApplicationTab = () => {
             <Table>
               <TableHead sx={{ backgroundColor: "primary.main" }}>
                 <TableRow>
-                  <TableCell sx={{ color: "#fff" }}>Application ID</TableCell>
-                  <TableCell sx={{ color: "#fff" }}>Applicant Name</TableCell>
+                  <TableCell sx={{ color: "#fff" }}>ID</TableCell>
+                  <TableCell sx={{ color: "#fff" }}>Applicant</TableCell>
                   <TableCell sx={{ color: "#fff" }}>Service</TableCell>
                   <TableCell sx={{ color: "#fff" }}>Status</TableCell>
-                  <TableCell sx={{ color: "#fff" }}>Assigned Staff</TableCell>
+                  <TableCell sx={{ color: "#fff" }}>Staff</TableCell>
                   <TableCell sx={{ color: "#fff" }}>Submitted Date</TableCell>
                   <TableCell sx={{ color: "#fff" }}>Action</TableCell>
                 </TableRow>
@@ -138,7 +116,6 @@ const ApplicationTab = () => {
                       <Button
                         size="small"
                         variant="contained"
-                        disabled={app.disableView}
                         onClick={() => {
                           setSelectedApplication(app);
                           setTab(1);
@@ -155,7 +132,7 @@ const ApplicationTab = () => {
         </Box>
       )}
 
-      {/* TAB 1 */}
+      {/* Application Details Tab */}
       {tab === 1 && selectedApplication && (
         <Box sx={{ mt: 3 }}>
           <Typography variant="h6">
@@ -181,31 +158,11 @@ const ApplicationTab = () => {
             <Button variant="contained" onClick={() => setStaffModalOpen(true)}>
               Assign Staff
             </Button>
-            <Button
-              color="success"
-              variant="contained"
-              onClick={() => {
-                setActionType("approve");
-                setActionModalOpen(true);
-              }}
-            >
-              Approve
-            </Button>
-            <Button
-              color="error"
-              variant="contained"
-              onClick={() => {
-                setActionType("reject");
-                setActionModalOpen(true);
-              }}
-            >
-              Reject
-            </Button>
           </Box>
         </Box>
       )}
 
-      {/* STAFF MODAL */}
+      {/* Staff Modal */}
       <Dialog open={staffModalOpen} onClose={() => setStaffModalOpen(false)}>
         <DialogTitle>Assign Staff</DialogTitle>
         <DialogContent>
@@ -231,17 +188,6 @@ const ApplicationTab = () => {
           <Button onClick={() => setStaffModalOpen(false)}>Cancel</Button>
           <Button variant="contained" onClick={handleAssignStaff}>
             Assign
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* ACTION MODAL */}
-      <Dialog open={actionModalOpen} onClose={() => setActionModalOpen(false)}>
-        <DialogTitle>Confirm Action</DialogTitle>
-        <DialogActions>
-          <Button onClick={() => setActionModalOpen(false)}>Cancel</Button>
-          <Button variant="contained" onClick={handleAction}>
-            Confirm
           </Button>
         </DialogActions>
       </Dialog>

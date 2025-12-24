@@ -39,28 +39,73 @@ const StaffTab = () => {
 
   const [alert, setAlert] = useState({
     open: false,
-    severity: "",
+    severity: "success",
     message: "",
   });
 
-  const handleSubmitSignup = (e) => {
-    e.preventDefault();
-    if (staffForm.password !== staffForm.confirmPassword) {
-      setAlert({
-        open: true,
-        severity: "error",
-        message: "Passwords do not match",
-      });
-      return;
-    }
+  /* ================= CREATE STAFF ================= */
+  // const handleSubmitSignup = (e) => {
+  //   e.preventDefault();
 
-    const result = signupStaff(
-      staffForm.username,
-      staffForm.email,
-      staffForm.password,
-      staffForm.confirmPassword,
-      staffForm.role
-    );
+  //   if (
+  //     !staffForm.username ||
+  //     !staffForm.email ||
+  //     !staffForm.password ||
+  //     !staffForm.confirmPassword
+  //   ) {
+  //     setAlert({
+  //       open: true,
+  //       severity: "error",
+  //       message: "Please fill all required fields",
+  //     });
+  //     return;
+  //   }
+
+  //   if (staffForm.password !== staffForm.confirmPassword) {
+  //     setAlert({
+  //       open: true,
+  //       severity: "error",
+  //       message: "Passwords do not match",
+  //     });
+  //     return;
+  //   }
+
+  //   // Use AdminContext signupStaff
+  //   const result = signupStaff({
+  //     username: staffForm.username,
+  //     email: staffForm.email,
+  //     role: staffForm.role,
+  //     password: staffForm.password,
+  //   });
+
+  //   setAlert({
+  //     open: true,
+  //     severity: result.success ? "success" : "error",
+  //     message: result.message,
+  //   });
+
+  //   if (result.success) {
+  //     setTab(0);
+  //     setStaffForm({
+  //       username: "",
+  //       email: "",
+  //       role: "staff",
+  //       password: "",
+  //       confirmPassword: "",
+  //     });
+  //   }
+  // };
+
+  const handleSubmitSignup = async (e) => {
+    e.preventDefault();
+    // ... your validation checks
+
+    const result = await signupStaff({
+      username: staffForm.username,
+      email: staffForm.email,
+      role: staffForm.role,
+      password: staffForm.password,
+    });
 
     setAlert({
       open: true,
@@ -80,12 +125,29 @@ const StaffTab = () => {
     }
   };
 
-  const handleDeleteStaff = (email) => {
-    deleteStaff(email);
+  /* ================= DELETE STAFF ================= */
+  // const handleDeleteStaff = (email) => {
+  //   deleteStaff(email);
+  //   setAlert({
+  //     open: true,
+  //     severity: "success",
+  //     message: "Staff deleted successfully",
+  //   });
+  // };
+
+  const handleDeleteStaff = async (staffId) => {
+    const result = await deleteStaff(staffId); // pass Firestore doc ID, not email
+
+    setAlert({
+      open: true,
+      severity: result.success ? "success" : "error",
+      message: result.message,
+    });
   };
 
   return (
     <Box sx={{ width: "100%" }}>
+      {/* ================= TABS ================= */}
       <Tabs
         value={tab}
         onChange={(e, newValue) => setTab(newValue)}
@@ -95,6 +157,7 @@ const StaffTab = () => {
         <Tab label="Staff Sign Up" />
       </Tabs>
 
+      {/* ================= STAFF DETAILS ================= */}
       {tab === 0 && (
         <Box sx={{ mt: 3 }}>
           <Typography variant="h6" gutterBottom>
@@ -113,24 +176,32 @@ const StaffTab = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {staffList.map((staff, index) => (
-                  <TableRow key={staff.email}>
-                    <TableCell>{index + 1}</TableCell>
-                    <TableCell>{staff.username}</TableCell>
-                    <TableCell>{staff.email}</TableCell>
-                    <TableCell>{staff.role}</TableCell>
-                    <TableCell>{staff.createdAt || "---"}</TableCell>
-                    <TableCell>
-                      <IconButton
-                        color="error"
-                        onClick={() => handleDeleteStaff(staff.email)}
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {staffList.length === 0 && (
+                {staffList.length > 0 ? (
+                  staffList.map((staff, index) => (
+                    <TableRow key={staff.email}>
+                      <TableCell>{index + 1}</TableCell>
+                      <TableCell>{staff.username}</TableCell>
+                      <TableCell>{staff.email}</TableCell>
+                      <TableCell>{staff.role}</TableCell>
+                      <TableCell>
+                        {staff.createdAt
+                          ? new Date(
+                              staff.createdAt.seconds * 1000
+                            ).toLocaleString()
+                          : "---"}
+                      </TableCell>
+
+                      <TableCell>
+                        <IconButton
+                          color="error"
+                          onClick={() => handleDeleteStaff(staff.id)}
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
                   <TableRow>
                     <TableCell colSpan={6} align="center">
                       No staff found
@@ -143,6 +214,7 @@ const StaffTab = () => {
         </Box>
       )}
 
+      {/* ================= STAFF SIGN UP ================= */}
       {tab === 1 && (
         <Box sx={{ mt: 3 }}>
           {alert.open && (
@@ -167,6 +239,7 @@ const StaffTab = () => {
             <Typography variant="h5" fontWeight={700} textAlign="center">
               Create Staff Account
             </Typography>
+
             <TextField
               label="User Name"
               size="small"
@@ -211,7 +284,10 @@ const StaffTab = () => {
               size="small"
               value={staffForm.confirmPassword}
               onChange={(e) =>
-                setStaffForm({ ...staffForm, confirmPassword: e.target.value })
+                setStaffForm({
+                  ...staffForm,
+                  confirmPassword: e.target.value,
+                })
               }
             />
 

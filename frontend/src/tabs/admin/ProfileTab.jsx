@@ -15,6 +15,14 @@ import {
   Stack,
   Paper,
 } from "@mui/material";
+import { doc, getDoc, updateDoc } from "../../firebase/firebase";
+import { db } from "../../firebase/firebase";
+import {
+  getAuth,
+  updatePassword,
+  reauthenticateWithCredential,
+  EmailAuthProvider,
+} from "firebase/auth";
 
 const Profile = () => {
   const [user, setUser] = useState(null);
@@ -30,15 +38,27 @@ const Profile = () => {
     message: "",
   });
 
-  // Load logged-in user
+  const auth = getAuth();
+
+  // Load logged-in user from Firebase
   useEffect(() => {
-    const loggedInUser =
-      JSON.parse(localStorage.getItem("loggedInUser")) || null;
-    setUser(loggedInUser);
-  }, []);
+    const fetchUserData = async () => {
+      const currentUser = auth.currentUser;
+      if (!currentUser) return;
+
+      const docRef = doc(db, "users", currentUser.uid);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        setUser({ id: currentUser.uid, ...docSnap.data() });
+      }
+    };
+
+    fetchUserData();
+  }, [auth]);
 
   // Handle password change
-  const handleChangePassword = () => {
+  const handleChangePassword = async () => {
     if (
       !passwordData.currentPassword ||
       !passwordData.newPassword ||
@@ -59,39 +79,42 @@ const Profile = () => {
       });
     }
 
-    if (passwordData.currentPassword !== user.password) {
-      return setAlert({
+    try {
+      const credential = EmailAuthProvider.credential(
+        user.email,
+        passwordData.currentPassword
+      );
+      await reauthenticateWithCredential(auth.currentUser, credential);
+
+      await updatePassword(auth.currentUser, passwordData.newPassword);
+
+      // Optional: update Firestore if you store password (not recommended)
+      // const userRef = doc(db, "users", user.id);
+      // await updateDoc(userRef, { password: passwordData.newPassword });
+
+      setPasswordData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+      setOpenDialog(false);
+
+      setAlert({
+        open: true,
+        severity: "success",
+        message: "Password updated successfully",
+      });
+    } catch (error) {
+      console.error(error);
+      setAlert({
         open: true,
         severity: "error",
-        message: "Current password is incorrect",
+        message:
+          error.code === "auth/wrong-password"
+            ? "Current password is incorrect"
+            : "Failed to update password",
       });
     }
-
-    const users = JSON.parse(localStorage.getItem("signupDetails")) || [];
-
-    const updatedUsers = users.map((u) =>
-      u.email === user.email ? { ...u, password: passwordData.newPassword } : u
-    );
-
-    localStorage.setItem("signupDetails", JSON.stringify(updatedUsers));
-
-    const updatedUser = { ...user, password: passwordData.newPassword };
-    localStorage.setItem("loggedInUser", JSON.stringify(updatedUser));
-    setUser(updatedUser);
-
-    setPasswordData({
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: "",
-    });
-
-    setOpenDialog(false);
-
-    setAlert({
-      open: true,
-      severity: "success",
-      message: "Password updated successfully",
-    });
   };
 
   if (!user) return null;
@@ -113,7 +136,6 @@ const Profile = () => {
           </Alert>
         )}
 
-        {/* Profile as List */}
         <List>
           <ListItem>
             <ListItemText primary="Username" secondary={user.username} />
@@ -136,7 +158,6 @@ const Profile = () => {
           </Button>
         </Box>
 
-        {/* Change Password Dialog */}
         <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
           <DialogTitle>Change Password</DialogTitle>
           <DialogContent>
