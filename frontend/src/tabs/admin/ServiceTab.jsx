@@ -31,7 +31,7 @@ import {
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { useAdmin } from "../../context/AdminContext";
+import { useAdmin } from "../../context/AdminContext.jsx";
 
 const ServiceTab = () => {
   const { services, createService, updateService, deleteService } = useAdmin();

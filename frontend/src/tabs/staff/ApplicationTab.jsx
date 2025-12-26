@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Box,
   Button,
@@ -23,18 +23,27 @@ import { useStaff } from "../../context/StaffContext";
 
 const ApplicationTab = () => {
   const {
-    filteredApplications,
+    staffApplications,
     selectedApplication,
     setSelectedApplication,
-    serviceFilter,
-    setServiceFilter,
-    statusFilter,
-    setStatusFilter,
     updateApplicationStatus,
   } = useStaff();
 
   const [tab, setTab] = useState(0);
   const [remark, setRemark] = useState("");
+  const [serviceFilter, setServiceFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+
+  // Filtered applications based on service & status
+  const filteredApplications = useMemo(
+    () =>
+      staffApplications.filter(
+        (app) =>
+          (!serviceFilter || app.service === serviceFilter) &&
+          (!statusFilter || app.status === statusFilter)
+      ),
+    [staffApplications, serviceFilter, statusFilter]
+  );
 
   return (
     <Box sx={{ width: "100%" }}>
@@ -55,6 +64,7 @@ const ApplicationTab = () => {
                 onChange={(e) => setServiceFilter(e.target.value)}
               >
                 <MenuItem value="">All</MenuItem>
+                {/* Dynamically populate services if needed */}
                 <MenuItem value="Water Supply">Water Supply</MenuItem>
                 <MenuItem value="Electricity">Electricity</MenuItem>
               </Select>
@@ -137,7 +147,13 @@ const ApplicationTab = () => {
             {selectedApplication.status === "submitted" && (
               <Button
                 variant="contained"
-                onClick={() => updateApplicationStatus("under_review", remark)}
+                onClick={() =>
+                  updateApplicationStatus(
+                    selectedApplication.id,
+                    "under_review",
+                    remark
+                  )
+                }
               >
                 Mark Under Review
               </Button>
@@ -147,7 +163,13 @@ const ApplicationTab = () => {
               <Button
                 variant="contained"
                 color="success"
-                onClick={() => updateApplicationStatus("forwarded", remark)}
+                onClick={() =>
+                  updateApplicationStatus(
+                    selectedApplication.id,
+                    "forwarded",
+                    remark
+                  )
+                }
               >
                 Forward to Officer
               </Button>

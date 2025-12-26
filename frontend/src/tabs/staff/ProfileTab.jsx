@@ -15,30 +15,49 @@ import {
   Stack,
   Paper,
 } from "@mui/material";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "../../firebase/firebase";
+import {
+  updatePassword,
+  reauthenticateWithCredential,
+  EmailAuthProvider,
+} from "firebase/auth";
+import { useAuth } from "../../context/AuthContext";
 
 const Profile = () => {
+  const { currentUser, loading } = useAuth();
   const [user, setUser] = useState(null);
+
   const [openDialog, setOpenDialog] = useState(false);
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
   });
+
   const [alert, setAlert] = useState({
     open: false,
     severity: "",
     message: "",
   });
 
-  // Load logged-in user
+  // Fetch full user profile from Firestore
   useEffect(() => {
-    const loggedInUser =
-      JSON.parse(localStorage.getItem("loggedInUser")) || null;
-    setUser(loggedInUser);
-  }, []);
+    if (!currentUser) return;
 
-  // Handle password change
-  const handleChangePassword = () => {
+    const fetchUser = async () => {
+      const docRef = doc(db, "users", currentUser.uid);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        setUser({ id: currentUser.uid, ...docSnap.data() });
+      }
+    };
+
+    fetchUser();
+  }, [currentUser]);
+
+  const handleChangePassword = async () => {
     if (
       !passwordData.currentPassword ||
       !passwordData.newPassword ||
@@ -59,42 +78,47 @@ const Profile = () => {
       });
     }
 
-    if (passwordData.currentPassword !== user.password) {
-      return setAlert({
+    try {
+      const credential = EmailAuthProvider.credential(
+        currentUser.email,
+        passwordData.currentPassword
+      );
+
+      await reauthenticateWithCredential(
+        currentUser.auth || currentUser,
+        credential
+      );
+
+      await updatePassword(
+        currentUser.auth || currentUser,
+        passwordData.newPassword
+      );
+
+      setPasswordData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+
+      setOpenDialog(false);
+      setAlert({
+        open: true,
+        severity: "success",
+        message: "Password updated successfully",
+      });
+    } catch (error) {
+      setAlert({
         open: true,
         severity: "error",
-        message: "Current password is incorrect",
+        message:
+          error.code === "auth/wrong-password"
+            ? "Current password is incorrect"
+            : "Failed to update password",
       });
     }
-
-    const users = JSON.parse(localStorage.getItem("signupDetails")) || [];
-
-    const updatedUsers = users.map((u) =>
-      u.email === user.email ? { ...u, password: passwordData.newPassword } : u
-    );
-
-    localStorage.setItem("signupDetails", JSON.stringify(updatedUsers));
-
-    const updatedUser = { ...user, password: passwordData.newPassword };
-    localStorage.setItem("loggedInUser", JSON.stringify(updatedUser));
-    setUser(updatedUser);
-
-    setPasswordData({
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: "",
-    });
-
-    setOpenDialog(false);
-
-    setAlert({
-      open: true,
-      severity: "success",
-      message: "Password updated successfully",
-    });
   };
 
-  if (!user) return null;
+  if (loading || !user) return null;
 
   return (
     <Box sx={{ mx: "auto", mt: 4 }}>
@@ -113,13 +137,12 @@ const Profile = () => {
           </Alert>
         )}
 
-        {/* Profile as List */}
         <List>
           <ListItem>
             <ListItemText primary="Username" secondary={user.username} />
           </ListItem>
           <ListItem>
-            <ListItemText primary="Email" secondary={user.email} />
+            <ListItemText primary="Email" secondary={currentUser.email} />
           </ListItem>
           <ListItem>
             <ListItemText primary="Role" secondary={user.role} />
@@ -136,7 +159,6 @@ const Profile = () => {
           </Button>
         </Box>
 
-        {/* Change Password Dialog */}
         <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
           <DialogTitle>Change Password</DialogTitle>
           <DialogContent>

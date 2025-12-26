@@ -13,7 +13,6 @@ import {
   deleteDoc,
   doc,
 } from "firebase/firestore";
-
 import { db } from "../firebase/firebase";
 import { useAuth } from "./AuthContext";
 
@@ -29,42 +28,48 @@ export const AdminPanelProvider = ({ children }) => {
   const [selectedApplication, setSelectedApplication] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  /* ================= ADMIN GUARD ================= */
   const isAdmin = currentUser?.role === "admin";
 
-  /* ================= FETCH DATA ================= */
   useEffect(() => {
-    if (!isAdmin) return;
-
-    const fetchData = async () => {
+    const fetchServices = async () => {
       try {
-        const [appsSnap, servicesSnap, usersSnap] = await Promise.all([
+        const servicesSnap = await getDocs(collection(db, "services"));
+        setServices(servicesSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
+      } catch (err) {
+        console.error("Service fetch error:", err);
+      }
+    };
+
+    const fetchAdminData = async () => {
+      try {
+        const [appsSnap, usersSnap] = await Promise.all([
           getDocs(collection(db, "applications")),
-          getDocs(collection(db, "services")),
           getDocs(collection(db, "users")),
         ]);
 
         setApplications(appsSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
-
-        setServices(servicesSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
-
-        const users = usersSnap.docs.map((d) => ({
-          id: d.id,
-          ...d.data(),
-        }));
-
+        const users = usersSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
         setStaffList(users.filter((u) => u.role === "staff"));
       } catch (err) {
         console.error("Admin fetch error:", err);
-      } finally {
-        setLoading(false);
       }
     };
 
-    fetchData();
+    const loadData = async () => {
+      setLoading(true);
+      await fetchServices(); // ✅ always fetch services
+
+      if (isAdmin) {
+        await fetchAdminData(); // ✅ admin-only data
+      }
+
+      setLoading(false);
+    };
+
+    loadData();
   }, [isAdmin]);
 
-  /* ================= APPLICATION ACTIONS ================= */
+  // === APPLICATION, STAFF, SERVICES FUNCTIONS (unchanged) ===
   const updateApplication = async (id, data) => {
     await updateDoc(doc(db, "applications", id), data);
     setApplications((prev) =>
@@ -72,9 +77,9 @@ export const AdminPanelProvider = ({ children }) => {
     );
   };
 
-  const assignStaff = (appId, staffName) =>
+  const assignStaff = (appId, staffEmail) =>
     updateApplication(appId, {
-      staff: staffName,
+      staff: staffEmail, // ✅ email, not name
       status: "under_review",
     });
 
@@ -85,44 +90,35 @@ export const AdminPanelProvider = ({ children }) => {
         (!status || app.status === status)
     );
 
-  /* ================= STAFF ================= */
   const signupStaff = async ({ username, email, role, password }) => {
     try {
       const newStaffRef = await addDoc(collection(db, "users"), {
         username,
         email,
         role,
-        password, // consider hashing in production
+        password,
         createdAt: new Date(),
       });
-
       const newStaff = { id: newStaffRef.id, username, email, role };
       setStaffList((prev) => [...prev, newStaff]);
-
       return { success: true, message: "Staff signed up successfully!" };
     } catch (err) {
       console.error("Signup error:", err);
       return { success: false, message: "Failed to signup staff." };
     }
   };
-  // const deleteStaff = async (uid) => {
-  //   await deleteDoc(doc(db, "users", uid));
-  //   setStaffList((prev) => prev.filter((s) => s.id !== uid));
-  // };
 
   const deleteStaff = async (staffId) => {
     try {
-      await deleteDoc(doc(db, "users", staffId)); // use Firestore doc ID
+      await deleteDoc(doc(db, "users", staffId));
       setStaffList((prev) => prev.filter((s) => s.id !== staffId));
-
       return { success: true, message: "Staff deleted successfully" };
     } catch (err) {
       console.error("Delete staff error:", err);
-      return { success: false, message: "Failed to delete staff" };
+      return { success: false, message: "Failed to delete staff." };
     }
   };
 
-  /* ================= SERVICES ================= */
   const createService = async (service) => {
     const ref = await addDoc(collection(db, "services"), service);
     setServices((prev) => [...prev, { id: ref.id, ...service }]);
@@ -138,7 +134,6 @@ export const AdminPanelProvider = ({ children }) => {
     setServices((prev) => prev.filter((s) => s.id !== id));
   };
 
-  /* ================= DASHBOARD ================= */
   const dashboardStats = useMemo(
     () => ({
       totalServices: services.length,
@@ -153,8 +148,6 @@ export const AdminPanelProvider = ({ children }) => {
     }),
     [services, applications]
   );
-
-  if (!isAdmin || loading) return null;
 
   return (
     <AdminPanelContext.Provider
@@ -172,6 +165,8 @@ export const AdminPanelProvider = ({ children }) => {
         deleteService,
         deleteStaff,
         dashboardStats,
+        updateApplication,
+        loading,
       }}
     >
       {children}

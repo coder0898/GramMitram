@@ -15,37 +15,37 @@ import {
   Stack,
   Paper,
 } from "@mui/material";
-import { doc, getDoc, updateDoc } from "../../firebase/firebase";
+import { doc, getDoc } from "firebase/firestore";
 import { db } from "../../firebase/firebase";
 import {
-  getAuth,
   updatePassword,
   reauthenticateWithCredential,
   EmailAuthProvider,
 } from "firebase/auth";
+import { useAuth } from "../../context/AuthContext";
 
 const Profile = () => {
+  const { currentUser, loading } = useAuth();
   const [user, setUser] = useState(null);
+
   const [openDialog, setOpenDialog] = useState(false);
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
   });
+
   const [alert, setAlert] = useState({
     open: false,
     severity: "",
     message: "",
   });
 
-  const auth = getAuth();
-
-  // Load logged-in user from Firebase
+  // Fetch full user profile from Firestore
   useEffect(() => {
-    const fetchUserData = async () => {
-      const currentUser = auth.currentUser;
-      if (!currentUser) return;
+    if (!currentUser) return;
 
+    const fetchUser = async () => {
       const docRef = doc(db, "users", currentUser.uid);
       const docSnap = await getDoc(docRef);
 
@@ -54,10 +54,9 @@ const Profile = () => {
       }
     };
 
-    fetchUserData();
-  }, [auth]);
+    fetchUser();
+  }, [currentUser]);
 
-  // Handle password change
   const handleChangePassword = async () => {
     if (
       !passwordData.currentPassword ||
@@ -81,31 +80,33 @@ const Profile = () => {
 
     try {
       const credential = EmailAuthProvider.credential(
-        user.email,
+        currentUser.email,
         passwordData.currentPassword
       );
-      await reauthenticateWithCredential(auth.currentUser, credential);
 
-      await updatePassword(auth.currentUser, passwordData.newPassword);
+      await reauthenticateWithCredential(
+        currentUser.auth || currentUser,
+        credential
+      );
 
-      // Optional: update Firestore if you store password (not recommended)
-      // const userRef = doc(db, "users", user.id);
-      // await updateDoc(userRef, { password: passwordData.newPassword });
+      await updatePassword(
+        currentUser.auth || currentUser,
+        passwordData.newPassword
+      );
 
       setPasswordData({
         currentPassword: "",
         newPassword: "",
         confirmPassword: "",
       });
-      setOpenDialog(false);
 
+      setOpenDialog(false);
       setAlert({
         open: true,
         severity: "success",
         message: "Password updated successfully",
       });
     } catch (error) {
-      console.error(error);
       setAlert({
         open: true,
         severity: "error",
@@ -117,7 +118,7 @@ const Profile = () => {
     }
   };
 
-  if (!user) return null;
+  if (loading || !user) return null;
 
   return (
     <Box sx={{ mx: "auto", mt: 4 }}>
@@ -141,7 +142,7 @@ const Profile = () => {
             <ListItemText primary="Username" secondary={user.username} />
           </ListItem>
           <ListItem>
-            <ListItemText primary="Email" secondary={user.email} />
+            <ListItemText primary="Email" secondary={currentUser.email} />
           </ListItem>
           <ListItem>
             <ListItemText primary="Role" secondary={user.role} />

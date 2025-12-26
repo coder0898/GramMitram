@@ -44,61 +44,31 @@ const StaffTab = () => {
   });
 
   /* ================= CREATE STAFF ================= */
-  // const handleSubmitSignup = (e) => {
-  //   e.preventDefault();
-
-  //   if (
-  //     !staffForm.username ||
-  //     !staffForm.email ||
-  //     !staffForm.password ||
-  //     !staffForm.confirmPassword
-  //   ) {
-  //     setAlert({
-  //       open: true,
-  //       severity: "error",
-  //       message: "Please fill all required fields",
-  //     });
-  //     return;
-  //   }
-
-  //   if (staffForm.password !== staffForm.confirmPassword) {
-  //     setAlert({
-  //       open: true,
-  //       severity: "error",
-  //       message: "Passwords do not match",
-  //     });
-  //     return;
-  //   }
-
-  //   // Use AdminContext signupStaff
-  //   const result = signupStaff({
-  //     username: staffForm.username,
-  //     email: staffForm.email,
-  //     role: staffForm.role,
-  //     password: staffForm.password,
-  //   });
-
-  //   setAlert({
-  //     open: true,
-  //     severity: result.success ? "success" : "error",
-  //     message: result.message,
-  //   });
-
-  //   if (result.success) {
-  //     setTab(0);
-  //     setStaffForm({
-  //       username: "",
-  //       email: "",
-  //       role: "staff",
-  //       password: "",
-  //       confirmPassword: "",
-  //     });
-  //   }
-  // };
 
   const handleSubmitSignup = async (e) => {
     e.preventDefault();
-    // ... your validation checks
+    if (
+      !staffForm.username ||
+      !staffForm.email ||
+      !staffForm.password ||
+      !staffForm.confirmPassword
+    ) {
+      setAlert({
+        open: true,
+        severity: "error",
+        message: "Please fill all required fields",
+      });
+      return;
+    }
+
+    if (staffForm.password !== staffForm.confirmPassword) {
+      setAlert({
+        open: true,
+        severity: "error",
+        message: "Passwords do not match",
+      });
+      return;
+    }
 
     const result = await signupStaff({
       username: staffForm.username,
@@ -126,14 +96,6 @@ const StaffTab = () => {
   };
 
   /* ================= DELETE STAFF ================= */
-  // const handleDeleteStaff = (email) => {
-  //   deleteStaff(email);
-  //   setAlert({
-  //     open: true,
-  //     severity: "success",
-  //     message: "Staff deleted successfully",
-  //   });
-  // };
 
   const handleDeleteStaff = async (staffId) => {
     const result = await deleteStaff(staffId); // pass Firestore doc ID, not email
