@@ -17,7 +17,7 @@ import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 const menuItems = [
   { label: "Dashboard", icon: <DashboardIcon /> },
   { label: "View Services", icon: <BuildCircleIcon /> },
-  { label: "Apply Service", icon: <AssignmentIcon /> },
+  // { label: "Apply Service", icon: <AssignmentIcon /> },
   { label: "My Applications", icon: <AppsIcon /> },
   { label: "Profile", icon: <AccountCircleIcon /> },
 ];
@@ -33,7 +33,7 @@ export default function UserPanel() {
       children={{
         Dashboard: <Dashboard />,
         "View Services": <ServiceTab onApplyClick={() => {}} />, // handleApplyClick can be added inside ServiceTab if needed
-        "Apply Service": <ApplyServiceTab />,
+        // "Apply Service": <ApplyServiceTab />,
         "My Applications": <ApplicationTab />,
         Profile: <ProfileTab />,
       }}
