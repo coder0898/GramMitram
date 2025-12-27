@@ -23,10 +23,10 @@ import {
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { useAdmin } from "../../context/AdminContext";
+import { useApp } from "../context/AppContext";
 
 const StaffTab = () => {
-  const { staffList, signupStaff, deleteStaff } = useAdmin();
+  const { staffList, signupStaff, deleteStaff } = useApp();
   const [tab, setTab] = useState(0);
 
   const [staffForm, setStaffForm] = useState({
@@ -47,6 +47,7 @@ const StaffTab = () => {
 
   const handleSubmitSignup = async (e) => {
     e.preventDefault();
+
     if (
       !staffForm.username ||
       !staffForm.email ||
@@ -70,20 +71,20 @@ const StaffTab = () => {
       return;
     }
 
-    const result = await signupStaff({
-      username: staffForm.username,
-      email: staffForm.email,
-      role: staffForm.role,
-      password: staffForm.password,
-    });
+    try {
+      await signupStaff({
+        username: staffForm.username,
+        email: staffForm.email,
+        role: staffForm.role,
+        password: staffForm.password,
+      });
 
-    setAlert({
-      open: true,
-      severity: result.success ? "success" : "error",
-      message: result.message,
-    });
+      setAlert({
+        open: true,
+        severity: "success",
+        message: "Staff created successfully",
+      });
 
-    if (result.success) {
       setTab(0);
       setStaffForm({
         username: "",
@@ -92,19 +93,32 @@ const StaffTab = () => {
         password: "",
         confirmPassword: "",
       });
+    } catch (err) {
+      setAlert({
+        open: true,
+        severity: "error",
+        message: "Failed to create staff",
+      });
     }
   };
 
   /* ================= DELETE STAFF ================= */
 
   const handleDeleteStaff = async (staffId) => {
-    const result = await deleteStaff(staffId); // pass Firestore doc ID, not email
-
-    setAlert({
-      open: true,
-      severity: result.success ? "success" : "error",
-      message: result.message,
-    });
+    try {
+      await deleteStaff(staffId);
+      setAlert({
+        open: true,
+        severity: "success",
+        message: "Staff deleted successfully",
+      });
+    } catch (err) {
+      setAlert({
+        open: true,
+        severity: "error",
+        message: "Failed to delete staff",
+      });
+    }
   };
 
   return (
@@ -125,6 +139,7 @@ const StaffTab = () => {
           <Typography variant="h6" gutterBottom>
             View All Staff
           </Typography>
+
           <TableContainer component={Paper}>
             <Table>
               <TableHead sx={{ backgroundColor: "primary.main" }}>
@@ -137,10 +152,11 @@ const StaffTab = () => {
                   <TableCell sx={{ color: "#fff" }}>Action</TableCell>
                 </TableRow>
               </TableHead>
+
               <TableBody>
                 {staffList.length > 0 ? (
                   staffList.map((staff, index) => (
-                    <TableRow key={staff.email}>
+                    <TableRow key={staff.id}>
                       <TableCell>{index + 1}</TableCell>
                       <TableCell>{staff.username}</TableCell>
                       <TableCell>{staff.email}</TableCell>
@@ -152,7 +168,6 @@ const StaffTab = () => {
                             ).toLocaleString()
                           : "---"}
                       </TableCell>
-
                       <TableCell>
                         <IconButton
                           color="error"
@@ -210,6 +225,7 @@ const StaffTab = () => {
                 setStaffForm({ ...staffForm, username: e.target.value })
               }
             />
+
             <TextField
               label="Email"
               type="email"
@@ -219,6 +235,7 @@ const StaffTab = () => {
                 setStaffForm({ ...staffForm, email: e.target.value })
               }
             />
+
             <FormControl>
               <InputLabel>Role</InputLabel>
               <Select
@@ -231,6 +248,7 @@ const StaffTab = () => {
                 <MenuItem value="staff">Staff</MenuItem>
               </Select>
             </FormControl>
+
             <TextField
               label="Password"
               type="password"
@@ -240,6 +258,7 @@ const StaffTab = () => {
                 setStaffForm({ ...staffForm, password: e.target.value })
               }
             />
+
             <TextField
               label="Confirm Password"
               type="password"
@@ -262,6 +281,7 @@ const StaffTab = () => {
               >
                 Sign Up
               </Button>
+
               <Button
                 variant="contained"
                 fullWidth

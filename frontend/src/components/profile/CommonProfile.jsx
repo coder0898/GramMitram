@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   Box,
   Typography,
@@ -15,19 +15,13 @@ import {
   Stack,
   Paper,
 } from "@mui/material";
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "../../firebase/firebase";
 import {
   updatePassword,
   reauthenticateWithCredential,
   EmailAuthProvider,
 } from "firebase/auth";
-import { useAuth } from "../../context/AuthContext";
 
-const Profile = () => {
-  const { currentUser, loading } = useAuth();
-  const [user, setUser] = useState(null);
-
+const CommonProfile = ({ user, authUser }) => {
   const [openDialog, setOpenDialog] = useState(false);
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
@@ -41,28 +35,10 @@ const Profile = () => {
     message: "",
   });
 
-  // Fetch full user profile from Firestore
-  useEffect(() => {
-    if (!currentUser) return;
-
-    const fetchUser = async () => {
-      const docRef = doc(db, "users", currentUser.uid);
-      const docSnap = await getDoc(docRef);
-
-      if (docSnap.exists()) {
-        setUser({ id: currentUser.uid, ...docSnap.data() });
-      }
-    };
-
-    fetchUser();
-  }, [currentUser]);
-
   const handleChangePassword = async () => {
-    if (
-      !passwordData.currentPassword ||
-      !passwordData.newPassword ||
-      !passwordData.confirmPassword
-    ) {
+    const { currentPassword, newPassword, confirmPassword } = passwordData;
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
       return setAlert({
         open: true,
         severity: "error",
@@ -70,7 +46,7 @@ const Profile = () => {
       });
     }
 
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
+    if (newPassword !== confirmPassword) {
       return setAlert({
         open: true,
         severity: "error",
@@ -80,19 +56,12 @@ const Profile = () => {
 
     try {
       const credential = EmailAuthProvider.credential(
-        currentUser.email,
-        passwordData.currentPassword
+        authUser.email,
+        currentPassword
       );
 
-      await reauthenticateWithCredential(
-        currentUser.auth || currentUser,
-        credential
-      );
-
-      await updatePassword(
-        currentUser.auth || currentUser,
-        passwordData.newPassword
-      );
+      await reauthenticateWithCredential(authUser, credential);
+      await updatePassword(authUser, newPassword);
 
       setPasswordData({
         currentPassword: "",
@@ -118,7 +87,7 @@ const Profile = () => {
     }
   };
 
-  if (loading || !user) return null;
+  if (!user || !authUser) return null;
 
   return (
     <Box sx={{ mx: "auto", mt: 4 }}>
@@ -142,7 +111,7 @@ const Profile = () => {
             <ListItemText primary="Username" secondary={user.username} />
           </ListItem>
           <ListItem>
-            <ListItemText primary="Email" secondary={currentUser.email} />
+            <ListItemText primary="Email" secondary={authUser.email} />
           </ListItem>
           <ListItem>
             <ListItemText primary="Role" secondary={user.role} />
@@ -150,11 +119,7 @@ const Profile = () => {
         </List>
 
         <Box sx={{ mt: 2 }}>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={() => setOpenDialog(true)}
-          >
+          <Button variant="contained" onClick={() => setOpenDialog(true)}>
             Change Password
           </Button>
         </Box>
@@ -210,4 +175,4 @@ const Profile = () => {
   );
 };
 
-export default Profile;
+export default CommonProfile;
