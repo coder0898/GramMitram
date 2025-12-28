@@ -39,10 +39,40 @@ const SignupForm = () => {
     }
   }, [alert.open]);
 
+  // const onSubmitHandler = async (e) => {
+  //   e.preventDefault();
+  //   setLoading(true);
+
+  //   const result = await signup(
+  //     signupData.username,
+  //     signupData.email,
+  //     signupData.password,
+  //     signupData.confirmPassword
+  //   );
+
+  //   setAlert({
+  //     open: true,
+  //     severity: result.success ? "success" : "error",
+  //     message: result.message,
+  //   });
+
+  //   setLoading(false);
+
+  //   if (result.success) {
+  //     setSignupData({
+  //       username: "",
+  //       email: "",
+  //       password: "",
+  //       confirmPassword: "",
+  //     });
+  //   }
+  // };
+
   const onSubmitHandler = async (e) => {
     e.preventDefault();
     setLoading(true);
 
+    // 1️⃣ Attempt signup
     const result = await signup(
       signupData.username,
       signupData.email,
@@ -50,6 +80,34 @@ const SignupForm = () => {
       signupData.confirmPassword
     );
 
+    // 2️⃣ Log signup action to backend
+    try {
+      // Get the user from localStorage if signup saved it, otherwise use email
+      const user = JSON.parse(localStorage.getItem("loggedInUser")) || {
+        uid: "unknown",
+        role: "user",
+      };
+
+      await fetch("http://localhost:5000/api/log", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: user?.uid || "unknown",
+          role: user?.role || "user",
+          action: "signup",
+          details: {
+            username: signupData.username,
+            email: signupData.email,
+            success: result.success,
+            message: result.message,
+          },
+        }),
+      });
+    } catch (err) {
+      console.error("Failed to log signup action:", err);
+    }
+
+    // 3️⃣ Show alert
     setAlert({
       open: true,
       severity: result.success ? "success" : "error",
@@ -58,6 +116,7 @@ const SignupForm = () => {
 
     setLoading(false);
 
+    // 4️⃣ Clear form if successful
     if (result.success) {
       setSignupData({
         username: "",

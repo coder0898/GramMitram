@@ -1,11 +1,13 @@
 import express from "express";
 import upload from "../middleware/multer.js";
 import verifyFirebaseToken from "../middleware/verifyFirebaseToken.js";
+import { actionLogger } from "../middleware/actionLogger.js";
 
 const router = express.Router();
 
 router.post(
   "/applications/:id/upload",
+  actionLogger("upload doc"),
   verifyFirebaseToken,
   upload.single("file"),
   (req, res) => {

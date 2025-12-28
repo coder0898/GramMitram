@@ -39,12 +39,53 @@ const LoginForm = () => {
     }
   }, [alert.open]);
 
+  // const onSubmitHandler = async (e) => {
+  //   e.preventDefault();
+  //   setLoading(true);
+
+  //   const result = await login(loginData.email, loginData.password);
+
+  //   setAlert({
+  //     open: true,
+  //     severity: result.success ? "success" : "error",
+  //     message: result.message,
+  //   });
+
+  //   setLoading(false);
+
+  //   if (result.success) {
+  //     const user = JSON.parse(localStorage.getItem("loggedInUser"));
+  //     navigate(`/${user.role}`);
+  //   } else {
+  //     setLoginData({ email: "", password: "" });
+  //   }
+  // };
+
   const onSubmitHandler = async (e) => {
     e.preventDefault();
     setLoading(true);
 
+    // 1️⃣ Attempt login
     const result = await login(loginData.email, loginData.password);
 
+    // 2️⃣ Save login action to backend log route
+    try {
+      const user = JSON.parse(localStorage.getItem("loggedInUser"));
+      await fetch("http://localhost:5000/api/log", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: user?.uid || "unknown",
+          role: user?.role || "user",
+          action: "login",
+          details: { email: loginData.email, success: result.success },
+        }),
+      });
+    } catch (err) {
+      console.error("Failed to log login action:", err);
+    }
+
+    // 3️⃣ Show alert
     setAlert({
       open: true,
       severity: result.success ? "success" : "error",
@@ -53,6 +94,7 @@ const LoginForm = () => {
 
     setLoading(false);
 
+    // 4️⃣ Navigate if successful
     if (result.success) {
       const user = JSON.parse(localStorage.getItem("loggedInUser"));
       navigate(`/${user.role}`);

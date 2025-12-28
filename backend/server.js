@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 import uploadRoutes from "./routes/upload.routes.js";
 import downloadRoutes from "./routes/download.routes.js";
+import logRoute from "./routes/log.routes.js";
 
 const app = express();
 
@@ -17,6 +18,7 @@ app.get("/app", (req, res) => {
 // Routes
 app.use("/api", uploadRoutes);
 app.use("/api", downloadRoutes);
+app.use("/api", logRoute);
 
 // Start server
 const PORT = process.env.PORT || 5000;
