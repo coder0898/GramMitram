@@ -33,7 +33,7 @@ const CreateServiceForm = ({ onClose }) => {
     service_name: "",
     service_description: "",
     category: "",
-    documents: [],
+    requiredDocuments: [],
     service_status: true, // active by default
   });
 

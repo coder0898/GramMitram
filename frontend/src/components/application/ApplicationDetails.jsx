@@ -1,6 +1,13 @@
 import { Box, Typography, TextField, Button } from "@mui/material";
+import { getAuth } from "firebase/auth";
 
-const ApplicationDetails = ({ application, role, remark, setRemark }) => {
+const ApplicationDetails = ({
+  application,
+  role,
+  remark,
+  setRemark,
+  handleDownload,
+}) => {
   if (!application) return null;
 
   return (
@@ -8,28 +15,22 @@ const ApplicationDetails = ({ application, role, remark, setRemark }) => {
       <Typography variant="h6">
         Application Details ({application.id})
       </Typography>
-
       <Typography sx={{ mt: 1 }}>
         <b>Applicant:</b> {application.userEmail || "-"}
       </Typography>
-
       <Typography sx={{ mt: 1 }}>
         <b>Service:</b> {application.service}
       </Typography>
-
       <Typography sx={{ mt: 1 }}>
         <b>Status:</b> {application.status}
       </Typography>
-
       <Typography sx={{ mt: 1 }}>
         <b>Submitted:</b>{" "}
         {application.createdAt?.toDate?.().toLocaleDateString() || "-"}
       </Typography>
-
       <Typography sx={{ mt: 1 }}>
         <b>Staff:</b> {application.staff || "None"}
       </Typography>
-
       {/* Remarks field for staff */}
       {role === "staff" && (
         <TextField
@@ -42,7 +43,12 @@ const ApplicationDetails = ({ application, role, remark, setRemark }) => {
           onChange={(e) => setRemark(e.target.value)}
         />
       )}
-
+      {/* Display staff remark only for user */}
+      {role === "user" && application.staffRemark && (
+        <Box sx={{ mt: 2 }}>
+          <strong>Staff Remark:</strong> {application.staffRemark}
+        </Box>
+      )}
       {/* Download documents for staff */}
       {role === "staff" && application.documents?.length > 0 && (
         <Box sx={{ mt: 2, display: "flex", flexDirection: "column", gap: 1 }}>
@@ -50,9 +56,7 @@ const ApplicationDetails = ({ application, role, remark, setRemark }) => {
             <Button
               key={doc.fileName || doc.documentName}
               variant="outlined"
-              href={doc.fileUrl}
-              target="_blank"
-              rel="noopener noreferrer"
+              onClick={() => handleDownload(application.id, doc.fileName)}
             >
               Download: {doc.documentName}
             </Button>

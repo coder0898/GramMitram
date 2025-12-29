@@ -34,7 +34,7 @@ const ServiceTable = ({ services, role, onView, onApply, disableApply }) => {
               <TableCell>{service.service_name}</TableCell>
               <TableCell>{service.category}</TableCell>
               <TableCell>
-                {service.requiredDocuments?.map((doc) => (
+                {service.requiredDocuments.map((doc) => (
                   <Chip key={doc} label={doc} size="small" sx={{ mr: 0.5 }} />
                 ))}
               </TableCell>
@@ -53,18 +53,6 @@ const ServiceTable = ({ services, role, onView, onApply, disableApply }) => {
                 </Button>
 
                 {role === "user" && (
-                  // <Button
-                  //   size="small"
-                  //   variant="contained"
-                  //   color="success"
-                  //   startIcon={<AssignmentIcon />}
-                  //   sx={{ ml: 1 }}
-                  //   onClick={() => onApply(service)}
-                  //   disabled={hasApplied(service.service_name)}
-                  // >
-                  //   {hasApplied(service.service_name) ? "Applied" : "Apply"}
-                  // </Button>
-
                   <Button
                     size="small"
                     variant="contained"

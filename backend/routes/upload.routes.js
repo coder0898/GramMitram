@@ -9,14 +9,21 @@ router.post(
   "/applications/:id/upload",
   actionLogger("upload doc"),
   verifyFirebaseToken,
-  upload.single("file"),
+  upload.any(),
   (req, res) => {
-    if (!req.file) return res.status(400).json({ error: "File not uploaded" });
+    if (!req.files || req.files.length === 0)
+      return res.status(400).json({ error: "No files uploaded" });
 
-    // Optional: Save metadata in database
+    // Map files to metadata
+    const uploadedFiles = req.files.map((file) => ({
+      documentName: file.originalname,
+      fileName: file.filename,
+      fileUrl: `/uploads/${file.filename}`, // optional: add URL for download
+    }));
+
     res.json({
-      message: "File uploaded successfully",
-      filename: req.file.filename,
+      message: "Files uploaded successfully",
+      uploadedFiles,
       uploadedBy: req.user.uid,
       serviceId: req.params.id,
     });

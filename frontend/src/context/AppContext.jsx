@@ -106,26 +106,10 @@ export const AppProvider = ({ children }) => {
     await logAction("assign_staff", { applicationId: appId, staffEmail });
   };
 
-  // const applyForService = async (data) => {
-  //   try {
-  //     const docRef = await addDoc(collection(db, "applications"), {
-  //       ...data,
-  //       userEmail: currentUser.email,
-  //       status: "submitted",
-  //       staff: null,
-  //       createdAt: new Date(),
-  //     });
+  const applyForService = async (data, files) => {
+    if (!files || files.length === 0)
+      throw new Error("At least one document is required");
 
-  //     await logAction("apply_for_service", { applicationId: docRef.id, data });
-
-  //     return docRef;
-  //   } catch (err) {
-  //     console.error("Error applying for service:", err);
-  //   }
-  // };
-
-  const applyForService = async (data, file) => {
-    if (!file) throw new Error("Document upload is mandatory");
     if (!currentUser) throw new Error("User not logged in");
 
     // 1️⃣ Create application first
@@ -139,22 +123,30 @@ export const AppProvider = ({ children }) => {
     });
 
     try {
-      // 2️⃣ Upload file
-      const uploadedDoc = await uploadFile(docRef.id, file);
+      const uploadedDocs = [];
 
-      // 3️⃣ Update application with uploaded file info
+      for (const file of files) {
+        const uploadedDoc = await uploadFile(docRef.id, file);
+
+        // validate and provide defaults
+        uploadedDocs.push({
+          documentName: uploadedDoc.documentName || file.name,
+          fileName: uploadedDoc.fileName || file.name, // fallback to file.name
+          fileUrl: uploadedDoc.fileUrl || "", // empty string instead of null/undefined
+        });
+      }
+
       await updateDoc(doc(db, "applications", docRef.id), {
-        documents: [uploadedDoc],
+        documents: uploadedDocs,
       });
 
       await logAction("apply_for_service", {
         applicationId: docRef.id,
-        uploadedDoc,
+        uploadedDocs,
       });
 
       return docRef;
     } catch (err) {
-      // ❌ rollback application if upload fails
       await deleteDoc(doc(db, "applications", docRef.id));
       throw err;
     }
@@ -163,10 +155,11 @@ export const AppProvider = ({ children }) => {
   /* ================= SERVICE ACTIONS (ADMIN ONLY) ================= */
 
   const createService = async (service) => {
-    await addDoc(collection(db, "services"), {
+    const docRef = await addDoc(collection(db, "services"), {
       ...service,
       createdAt: new Date(),
     });
+
     await logAction("create_service", { serviceId: docRef.id, service });
   };
 
@@ -267,47 +260,13 @@ export const AppProvider = ({ children }) => {
       totalAssigned: staffApplications.length,
       underReview: staffApplications.filter((a) => a.status === "under_review")
         .length,
-      forwarded: staffApplications.filter((a) => a.status === "forwarded")
-        .length,
+      approved: staffApplications.filter((a) => a.status === "approved").length,
       rejected: staffApplications.filter((a) => a.status === "rejected").length,
     }),
     [staffApplications]
   );
 
   /* ================= FILE UPLOAD & DOWNLOAD ================= */
-
-  // const uploadFile = async (applicationId, file) => {
-  //   if (!file) return null;
-
-  //   const formData = new FormData();
-  //   formData.append("file", file);
-
-  //   try {
-  //     const res = await fetch(
-  //       `http://localhost:5000/api/applications/${applicationId}/upload`,
-  //       {
-  //         method: "POST",
-  //         headers: {
-  //           Authorization: `Bearer ${localStorage.getItem("token")}`, // Firebase token
-  //         },
-  //         body: formData,
-  //       }
-  //     );
-
-  //     const data = await res.json();
-  //     if (!res.ok) throw new Error(data.error || "Upload failed");
-
-  //     await logAction("upload_document", {
-  //       applicationId,
-  //       fileName: file.name,
-  //     });
-
-  //     return data; // returns uploaded file info
-  //   } catch (err) {
-  //     console.error("File upload failed:", err);
-  //     throw err;
-  //   }
-  // };
 
   const uploadFile = async (applicationId, file) => {
     if (!file) throw new Error("No file provided");
@@ -339,10 +298,15 @@ export const AppProvider = ({ children }) => {
       fileName: file.name,
     });
 
+    // Use fileUrl returned from backend
+    const uploadedFile = data.uploadedFiles?.[0];
+    if (!uploadedFile)
+      throw new Error("No uploaded file info returned from backend");
+
     return {
-      documentName: file.name,
-      fileName: data.filename,
-      fileUrl: null, // optional: you can save URL if backend provides it
+      documentName: uploadedFile.documentName, // original name
+      fileName: uploadedFile.fileName, // same as original name if you changed backend
+      fileUrl: uploadedFile.fileUrl, // now this is defined
     };
   };
 
@@ -353,15 +317,12 @@ export const AppProvider = ({ children }) => {
     const token = await getToken();
     if (!token) throw new Error("Failed to get auth token", token);
 
-    const res = await fetch(
-      `http://localhost:5000/api/applications/${applicationId}/download/${fileName}`,
-      {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+    const res = await fetch(`http://localhost:5000/api/files/${fileName}`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
 
     if (!res.ok) {
       const errorData = await res.json().catch(() => ({}));

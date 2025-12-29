@@ -14,6 +14,7 @@ import AppsIcon from "@mui/icons-material/Apps";
 import GroupIcon from "@mui/icons-material/Group";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import HistoryIcon from "@mui/icons-material/History";
+import AuditLogsTab from "../../tabs/AuditLogsTab";
 
 const menuItems = [
   { label: "Dashboard", icon: <DashboardIcon /> },
@@ -38,7 +39,7 @@ export default function AdminPanel() {
         "Application Management": <ApplicationTab />,
         "Staff Management": <StaffTab />,
         Profile: <ProfileTab />,
-        "Audit Logs": <div>Audit Logs Content</div>,
+        "Audit Logs": <AuditLogsTab />,
       }}
     />
   );

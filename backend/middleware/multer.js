@@ -6,18 +6,25 @@ import fs from "fs";
 const uploadFolder = path.join(process.cwd(), "uploads");
 
 // Ensure folder exists
-if (!fs.existsSync(uploadFolder))
+if (!fs.existsSync(uploadFolder)) {
   fs.mkdirSync(uploadFolder, { recursive: true });
+}
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadFolder),
   filename: (req, file, cb) => {
-    const uniqueName =
-      Date.now() +
-      "-" +
-      Math.round(Math.random() * 1e9) +
-      path.extname(file.originalname);
-    cb(null, uniqueName);
+    // Save file with original name
+    const filePath = path.join(uploadFolder, file.originalname);
+
+    // Check if a file with the same name exists
+    if (fs.existsSync(filePath)) {
+      const ext = path.extname(file.originalname);
+      const name = path.basename(file.originalname, ext);
+      const uniqueName = `${name}-${Date.now()}${ext}`; // avoid overwrite
+      cb(null, uniqueName);
+    } else {
+      cb(null, file.originalname);
+    }
   },
 });
 
@@ -31,7 +38,7 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({
   storage,
   fileFilter,
-  limits: { fileSize: 5 * 1024 * 1024 },
-}); // 5MB
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+});
 
 export default upload;
