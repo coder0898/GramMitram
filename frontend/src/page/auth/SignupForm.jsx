@@ -11,6 +11,8 @@ import {
 import { useAuth } from "../../context/AuthContext";
 import CloseIcon from "@mui/icons-material/Close";
 
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE;
+
 const SignupForm = () => {
   const { signup } = useAuth();
 
@@ -39,35 +41,6 @@ const SignupForm = () => {
     }
   }, [alert.open]);
 
-  // const onSubmitHandler = async (e) => {
-  //   e.preventDefault();
-  //   setLoading(true);
-
-  //   const result = await signup(
-  //     signupData.username,
-  //     signupData.email,
-  //     signupData.password,
-  //     signupData.confirmPassword
-  //   );
-
-  //   setAlert({
-  //     open: true,
-  //     severity: result.success ? "success" : "error",
-  //     message: result.message,
-  //   });
-
-  //   setLoading(false);
-
-  //   if (result.success) {
-  //     setSignupData({
-  //       username: "",
-  //       email: "",
-  //       password: "",
-  //       confirmPassword: "",
-  //     });
-  //   }
-  // };
-
   const onSubmitHandler = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -88,7 +61,7 @@ const SignupForm = () => {
         role: "user",
       };
 
-      await fetch("http://localhost:5000/api/log", {
+      await fetch(`${API_BASE}/api/log`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

@@ -12,6 +12,8 @@ import React, { useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE;
+
 const LoginForm = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -39,28 +41,6 @@ const LoginForm = () => {
     }
   }, [alert.open]);
 
-  // const onSubmitHandler = async (e) => {
-  //   e.preventDefault();
-  //   setLoading(true);
-
-  //   const result = await login(loginData.email, loginData.password);
-
-  //   setAlert({
-  //     open: true,
-  //     severity: result.success ? "success" : "error",
-  //     message: result.message,
-  //   });
-
-  //   setLoading(false);
-
-  //   if (result.success) {
-  //     const user = JSON.parse(localStorage.getItem("loggedInUser"));
-  //     navigate(`/${user.role}`);
-  //   } else {
-  //     setLoginData({ email: "", password: "" });
-  //   }
-  // };
-
   const onSubmitHandler = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -71,7 +51,7 @@ const LoginForm = () => {
     // 2️⃣ Save login action to backend log route
     try {
       const user = JSON.parse(localStorage.getItem("loggedInUser"));
-      await fetch("http://localhost:5000/api/log", {
+      await fetch(`${API_BASE}/api/log`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

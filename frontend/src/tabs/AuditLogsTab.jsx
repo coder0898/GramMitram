@@ -14,6 +14,8 @@ import {
 } from "@mui/material";
 import { useAuth } from "../context/AuthContext";
 
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE;
+
 const AuditLogsTab = () => {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -25,7 +27,7 @@ const AuditLogsTab = () => {
       try {
         setLoading(true);
         const token = await getToken();
-        const res = await fetch(`http://localhost:5000/api/logs`, {
+        const res = await fetch(`${API_BASE}/api/logs`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },

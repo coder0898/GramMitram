@@ -17,6 +17,8 @@ import {
 import { db } from "../firebase/firebase";
 import { useAuth } from "./AuthContext";
 
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE;
+
 /* ================= CONTEXT ================= */
 
 const AppContext = createContext();
@@ -40,7 +42,7 @@ export const AppProvider = ({ children }) => {
   // Helper to log actions
   const logAction = async (action, details = {}) => {
     try {
-      await fetch("http://localhost:5000/api/log", {
+      await fetch(`${API_BASE}/api/log`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -280,7 +282,7 @@ export const AppProvider = ({ children }) => {
     formData.append("file", file);
 
     const res = await fetch(
-      `http://localhost:5000/api/applications/${applicationId}/upload`,
+      `${API_BASE}/api/applications/${applicationId}/upload`,
       {
         method: "POST",
         headers: {
@@ -317,7 +319,7 @@ export const AppProvider = ({ children }) => {
     const token = await getToken();
     if (!token) throw new Error("Failed to get auth token", token);
 
-    const res = await fetch(`http://localhost:5000/api/files/${fileName}`, {
+    const res = await fetch(`${API_BASE}/api/files/${fileName}`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,
