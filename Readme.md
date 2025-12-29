@@ -1,10 +1,6 @@
-Sure! Here's a **professional README template** tailored for your **GramMitram** repo, similar to the BharatVault one, but adapted for a social/chat app project. You can copy this into your `README.md` and update links/screenshots as needed.
-
----
-
 # GramMitram
 
-**GramMitram** is a real-time chat and community application built to connect people at the village/community level. Users can sign up, create/join chat rooms, and send messages instantly.
+**GramMitram** is a web platform that digitizes access to rural development schemes. Citizens can apply for schemes online and track their application status, while staff and officers can review, verify, and approve requests.
 
 ---
 
