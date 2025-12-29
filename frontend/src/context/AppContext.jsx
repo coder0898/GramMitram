@@ -17,7 +17,7 @@ import {
 import { db } from "../firebase/firebase";
 import { useAuth } from "./AuthContext";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE;
+const API_BASE = process.env.VITE_PUBLIC_API_BASE;
 
 /* ================= CONTEXT ================= */
 

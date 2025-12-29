@@ -11,7 +11,7 @@ import {
 import { useAuth } from "../../context/AuthContext";
 import CloseIcon from "@mui/icons-material/Close";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE;
+const API_BASE = process.env.VITE_PUBLIC_API_BASE;
 
 const SignupForm = () => {
   const { signup } = useAuth();

@@ -8,7 +8,7 @@ import {
 import { auth, db } from "../firebase/firebase";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE;
+const API_BASE = process.env.VITE_PUBLIC_API_BASE;
 
 export const AuthContext = createContext();
 export const useAuth = () => useContext(AuthContext);

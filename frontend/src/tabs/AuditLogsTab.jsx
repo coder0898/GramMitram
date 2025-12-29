@@ -14,7 +14,7 @@ import {
 } from "@mui/material";
 import { useAuth } from "../context/AuthContext";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE;
+const API_BASE = process.env.VITE_PUBLIC_API_BASE;
 
 const AuditLogsTab = () => {
   const [logs, setLogs] = useState([]);

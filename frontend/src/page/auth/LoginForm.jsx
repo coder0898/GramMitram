@@ -12,7 +12,7 @@ import React, { useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE;
+const API_BASE = process.env.VITE_PUBLIC_API_BASE;
 
 const LoginForm = () => {
   const { login } = useAuth();
