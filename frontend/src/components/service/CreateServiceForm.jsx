@@ -31,7 +31,7 @@ const CreateServiceForm = ({ onClose }) => {
 
   const [serviceForm, setServiceForm] = useState({
     service_name: "",
-    service_description: "",
+    service_desc: "",
     category: "",
     requiredDocuments: [],
     service_status: true, // active by default
@@ -65,7 +65,7 @@ const CreateServiceForm = ({ onClose }) => {
       });
       setServiceForm({
         service_name: "",
-        service_description: "",
+        service_desc: "",
         category: "",
         requiredDocuments: [], // ✅ correct
         service_status: true,
@@ -85,7 +85,7 @@ const CreateServiceForm = ({ onClose }) => {
   const handleReset = () => {
     setServiceForm({
       service_name: "",
-      service_description: "",
+      service_desc: "",
       category: "",
       requiredDocuments: [],
       service_status: true,
@@ -132,11 +132,11 @@ const CreateServiceForm = ({ onClose }) => {
           size="small"
           multiline
           rows={3}
-          value={serviceForm.service_description}
+          value={serviceForm.service_desc}
           onChange={(e) =>
             setServiceForm({
               ...serviceForm,
-              service_description: e.target.value,
+              service_desc: e.target.value,
             })
           }
         />
