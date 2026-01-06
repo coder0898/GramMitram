@@ -11,7 +11,7 @@ import {
 import { useAuth } from "../../context/AuthContext";
 import CloseIcon from "@mui/icons-material/Close";
 
-const API_BASE = process.env.VITE_PUBLIC_API_BASE;
+const API_BASE = import.meta.env.VITE_PUBLIC_API;
 
 const SignupForm = () => {
   const { signup } = useAuth();
@@ -135,6 +135,7 @@ const SignupForm = () => {
               onChange={(e) =>
                 setSignupData({ ...signupData, username: e.target.value })
               }
+              autoComplete="username"
             />
           </FormControl>
 
@@ -148,6 +149,7 @@ const SignupForm = () => {
               onChange={(e) =>
                 setSignupData({ ...signupData, email: e.target.value })
               }
+              autoComplete="email"
             />
           </FormControl>
 
@@ -161,6 +163,7 @@ const SignupForm = () => {
               onChange={(e) =>
                 setSignupData({ ...signupData, password: e.target.value })
               }
+              autoComplete="new-password"
             />
           </FormControl>
 
@@ -177,6 +180,7 @@ const SignupForm = () => {
                   confirmPassword: e.target.value,
                 })
               }
+              autoComplete="new-password"
             />
           </FormControl>
 

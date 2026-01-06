@@ -33,10 +33,20 @@ const ServiceTable = ({ services, role, onView, onApply, disableApply }) => {
             <TableRow key={service.id} hover>
               <TableCell>{service.service_name}</TableCell>
               <TableCell>{service.category}</TableCell>
-              <TableCell>
+              {/* <TableCell>
                 {service.requiredDocuments.map((doc) => (
                   <Chip key={doc} label={doc} size="small" sx={{ mr: 0.5 }} />
                 ))}
+              </TableCell> */}
+              <TableCell>
+                {Array.isArray(service.requiredDocuments) &&
+                service.requiredDocuments.length > 0 ? (
+                  service.requiredDocuments.map((doc) => (
+                    <Chip key={doc} label={doc} size="small" sx={{ mr: 0.5 }} />
+                  ))
+                ) : (
+                  <Chip label="No documents" size="small" variant="outlined" />
+                )}
               </TableCell>
 
               {role === "user" && (

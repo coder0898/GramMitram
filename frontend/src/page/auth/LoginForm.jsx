@@ -12,7 +12,7 @@ import React, { useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 
-const API_BASE = process.env.VITE_PUBLIC_API_BASE;
+const API_BASE = import.meta.env.VITE_PUBLIC_API;
 
 const LoginForm = () => {
   const { login } = useAuth();
@@ -119,6 +119,7 @@ const LoginForm = () => {
               onChange={(e) =>
                 setLoginData({ ...loginData, email: e.target.value })
               }
+              autoComplete="email"
             />
           </FormControl>
 
@@ -132,6 +133,7 @@ const LoginForm = () => {
               onChange={(e) =>
                 setLoginData({ ...loginData, password: e.target.value })
               }
+              autoComplete="current-password"
             />
           </FormControl>
 

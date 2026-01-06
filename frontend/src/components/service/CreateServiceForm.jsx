@@ -67,9 +67,10 @@ const CreateServiceForm = ({ onClose }) => {
         service_name: "",
         service_description: "",
         category: "",
-        documents: [],
+        requiredDocuments: [], // ✅ correct
         service_status: true,
       });
+
       if (onClose) onClose();
     } catch (err) {
       setAlert({
@@ -86,7 +87,7 @@ const CreateServiceForm = ({ onClose }) => {
       service_name: "",
       service_description: "",
       category: "",
-      documents: [],
+      requiredDocuments: [],
       service_status: true,
     });
   };
@@ -161,16 +162,21 @@ const CreateServiceForm = ({ onClose }) => {
           <InputLabel>Documents Required</InputLabel>
           <Select
             multiple
-            value={serviceForm.documents}
+            value={serviceForm.requiredDocuments}
             onChange={(e) =>
-              setServiceForm({ ...serviceForm, documents: e.target.value })
+              setServiceForm({
+                ...serviceForm,
+                requiredDocuments: e.target.value,
+              })
             }
             input={<OutlinedInput label="Documents Required" />}
             renderValue={(selected) => selected.join(", ")}
           >
             {documentOptions.map((doc) => (
               <MenuItem key={doc} value={doc}>
-                <Checkbox checked={serviceForm.documents.includes(doc)} />
+                <Checkbox
+                  checked={serviceForm.requiredDocuments.includes(doc)}
+                />
                 <ListItemText primary={doc} />
               </MenuItem>
             ))}
